@@ -293,26 +293,54 @@ def fetch_source(source):
 
     news_items = []
 
-    for entry in feed.entries[:25]:
-        title = clean_text(
+    # Speed बनाए रखने के लिए प्रत्येक source की latest 12 खबरें
+    for entry in feed.entries[:12]:
+        original_title = clean_text(
             entry.get("title", "")
         )
 
-        if not title:
+        if not original_title:
             continue
 
-        description = (
+        article_link = entry.get(
+            "link",
+            ""
+        )
+
+        rss_description = (
             entry.get("summary", "")
             or entry.get("description", "")
         )
 
-        summary = create_summary(
-            title,
-            description
+        original_summary = create_summary(
+            original_title,
+            rss_description
+        )
+
+        original_details = fetch_article_details(
+            article_link
+        )
+
+        if not original_details:
+            original_details = original_summary
+
+        # Hindi translation
+        hindi_title = translate_to_hindi(
+            original_title
+        )
+
+        hindi_summary = translate_to_hindi(
+            original_summary
+        )
+
+        hindi_details = translate_to_hindi(
+            original_details
         )
 
         combined_text = (
-            f"{title} {summary}"
+            f"{original_title} "
+            f"{original_summary} "
+            f"{original_details}"
         )
 
         priority, impact = get_priority(
@@ -321,31 +349,40 @@ def fetch_source(source):
 
         news_items.append({
             "id": create_news_id(
-                title,
-                entry.get("link", "")
+                original_title,
+                article_link
             ),
-            "title": title,
-            "summary": summary,
+
+            "title": hindi_title,
+            "summary": hindi_summary,
+            "details": hindi_details,
+
+            "original_title": original_title,
+
             "category": source["category"],
             "priority": priority,
             "impact": impact,
+
             "sentiment": get_sentiment(
                 combined_text
             ),
+
             "affected": get_affected_sectors(
                 combined_text
             ),
+
             "source": source["name"],
+
             "published": get_published_time(
                 entry
             ),
-            "link": entry.get("link", ""),
+
+            "link": article_link,
             "verified": True
         })
 
     return news_items
-
-
+    
 def remove_duplicates(news_items):
     unique_news = []
     seen_titles = set()
