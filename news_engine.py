@@ -1,13 +1,15 @@
 import hashlib
 import re
 from datetime import datetime, timezone
+from functools import lru_cache
 
 import feedparser
+import requests
 from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
+from deep_translator import GoogleTranslator
 
 from news_sources import NEWS_SOURCES
-
 
 CRITICAL_WORDS = [
     "war",
