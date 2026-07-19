@@ -406,27 +406,28 @@ def remove_duplicates(news_items):
 
     return unique_news
 
-
 def sort_news(news_items):
-    priority_order = {
-        "critical": 3,
-        "high": 2,
-        "medium": 1,
-        "low": 0
-    }
+    def news_timestamp(item):
+        try:
+            published_time = date_parser.parse(
+                item.get("published", "")
+            )
+
+            if published_time.tzinfo is None:
+                published_time = published_time.replace(
+                    tzinfo=timezone.utc
+                )
+
+            return published_time.timestamp()
+
+        except Exception:
+            return 0
 
     return sorted(
         news_items,
-        key=lambda item: (
-            priority_order.get(
-                item.get("priority", "low"),
-                0
-            ),
-            item.get("published", "")
-        ),
+        key=news_timestamp,
         reverse=True
     )
-
 
 def get_news(category="all", limit=80):
     all_news = []
