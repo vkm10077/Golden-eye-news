@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Golden Eye News</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="top-header">
+
+        <div class="brand-area">
+            <div class="logo">GE</div>
+
+            <div>
+                <h1>Golden Eye</h1>
+                <p>Global News Intelligence</p>
+            </div>
+        </div>
+
+        <div class="live-status">
+            <span class="live-dot"></span>
+            LIVE
+        </div>
+
+    </header>
+
+
+    <main class="main-container">
+
+        <section class="alert-control-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Alert Control</h2>
+                    <p>Important news के लिए notification और Hindi audio</p>
+                </div>
+            </div>
+
+            <div class="control-grid">
+
+                <button
+                    id="notificationButton"
+                    class="control-button"
+                    onclick="enableNotifications()"
+                >
+                    🔔 Enable Notifications
+                </button>
+
+                <button
+                    id="audioButton"
+                    class="control-button"
+                    onclick="enableAudioAlerts()"
+                >
+                    🔊 Enable Audio Alerts
+                </button>
+
+            </div>
+
+            <div class="toggle-row">
+
+                <label class="toggle-item">
+                    <input
+                        type="checkbox"
+                        id="criticalOnly"
+                    >
+                    <span>Critical Alerts Only</span>
+                </label>
+
+                <label class="toggle-item">
+                    <input
+                        type="checkbox"
+                        id="hindiVoice"
+                        checked
+                    >
+                    <span>Hindi Voice</span>
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <section class="breaking-card">
+
+            <div class="breaking-label">
+                🚨 BREAKING
+            </div>
+
+            <div class="breaking-content">
+
+                <h2 id="breakingHeadline">
+                    Golden Eye monitoring system active
+                </h2>
+
+                <p id="breakingSummary">
+                    Finance, geopolitical, military, weather और disaster
+                    news monitoring के लिए system तैयार है।
+                </p>
+
+                <div class="news-meta">
+
+                    <span class="impact high-impact">
+                        Impact: High
+                    </span>
+
+                    <span>
+                        Source: Golden Eye
+                    </span>
+
+                    <span>
+                        अभी
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="categories-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>News Categories</h2>
+                    <p>अपनी जरूरी category चुनें</p>
+                </div>
+
+            </div>
+
+            <div class="category-scroll">
+
+                <button
+                    class="category-button active"
+                    onclick="filterNews('all', this)"
+                >
+                    All
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('market', this)"
+                >
+                    📈 Market
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('india', this)"
+                >
+                    🇮🇳 India
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('global', this)"
+                >
+                    🌍 Global
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('geopolitical', this)"
+                >
+                    🛡️ Geopolitical
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('military', this)"
+                >
+                    ⚔️ Military
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('weather', this)"
+                >
+                    🌧️ Weather
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('disaster', this)"
+                >
+                    🌋 Disaster
+                </button>
+
+                <button
+                    class="category-button"
+                    onclick="filterNews('commodity', this)"
+                >
+                    🛢️ Commodity
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="news-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Important News</h2>
+                    <p>Priority और market impact के अनुसार</p>
+                </div>
+
+                <button
+                    class="refresh-button"
+                    onclick="refreshNews()"
+                >
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+
+            <div id="newsContainer" class="news-list">
+
+                <article
+                    class="news-card"
+                    data-category="market"
+                >
+
+                    <div class="news-top-row">
+
+                        <span class="priority critical">
+                            CRITICAL
+                        </span>
+
+                        <span class="news-time">
+                            अभी
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        Golden Eye Market Monitoring Active
+                    </h3>
+
+                    <ul class="important-points">
+                        <li>Live market-moving news monitoring जोड़ा जाएगा।</li>
+                        <li>High-impact news पर audio alert मिलेगा।</li>
+                        <li>NIFTY, BANKNIFTY और sectors का impact दिखेगा।</li>
+                    </ul>
+
+                    <div class="news-tags">
+
+                        <span>Market</span>
+                        <span>System</span>
+                        <span>High Impact</span>
+
+                    </div>
+
+                    <div class="news-footer">
+
+                        <button
+                            class="listen-button"
+                            onclick="speakNews(
+                                'महत्वपूर्ण सूचना। गोल्डन आई मार्केट मॉनिटरिंग सिस्टम सक्रिय है।'
+                            )"
+                        >
+                            ▶ सुनें
+                        </button>
+
+                        <button class="details-button">
+                            पूरी खबर
+                        </button>
+
+                    </div>
+
+                </article>
+
+
+                <article
+                    class="news-card"
+                    data-category="weather"
+                >
+
+                    <div class="news-top-row">
+
+                        <span class="priority high">
+                            HIGH
+                        </span>
+
+                        <span class="news-time">
+                            अभी
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        Weather and Disaster Monitoring Module
+                    </h3>
+
+                    <ul class="important-points">
+                        <li>भारी बारिश, cyclone और flood alerts।</li>
+                        <li>Earthquake और severe weather detection।</li>
+                        <li>भारत और global weather updates।</li>
+                    </ul>
+
+                    <div class="news-tags">
+
+                        <span>Weather</span>
+                        <span>Disaster</span>
+                        <span>Alert</span>
+
+                    </div>
+
+                    <div class="news-footer">
+
+                        <button
+                            class="listen-button"
+                            onclick="speakNews(
+                                'मौसम और प्राकृतिक आपदा निगरानी प्रणाली तैयार है।'
+                            )"
+                        >
+                            ▶ सुनें
+                        </button>
+
+                        <button class="details-button">
+                            पूरी खबर
+                        </button>
+
+                    </div>
+
+                </article>
+
+
+                <article
+                    class="news-card"
+                    data-category="geopolitical"
+                >
+
+                    <div class="news-top-row">
+
+                        <span class="priority medium">
+                            MEDIUM
+                        </span>
+
+                        <span class="news-time">
+                            अभी
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        Geopolitical and Military News Module
+                    </h3>
+
+                    <ul class="important-points">
+                        <li>War, sanctions और military escalation alerts।</li>
+                        <li>Crude oil, currency और global market impact।</li>
+                        <li>Verified sources को priority दी जाएगी।</li>
+                    </ul>
+
+                    <div class="news-tags">
+
+                        <span>Geopolitical</span>
+                        <span>Military</span>
+                        <span>Global</span>
+
+                    </div>
+
+                    <div class="news-footer">
+
+                        <button
+                            class="listen-button"
+                            onclick="speakNews(
+                                'जियोपॉलिटिकल और सैन्य समाचार निगरानी प्रणाली तैयार है।'
+                            )"
+                        >
+                            ▶ सुनें
+                        </button>
+
+                        <button class="details-button">
+                            पूरी खबर
+                        </button>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <nav class="bottom-navigation">
+
+        <button class="nav-item active">
+            🏠
+            <span>Home</span>
+        </button>
+
+        <button class="nav-item">
+            🚨
+            <span>Breaking</span>
+        </button>
+
+        <button class="nav-item">
+            🔔
+            <span>Alerts</span>
+        </button>
+
+        <button class="nav-item">
+            ⚙️
+            <span>Settings</span>
+        </button>
+
+    </nav>
+
+
+    <script
+        src="{{ url_for('static', filename='app.js') }}"
+    ></script>
+
+</body>
+</html>
