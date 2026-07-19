@@ -217,7 +217,7 @@ function showImportantNotification(newsItems) {
 }
 
 
-function createNewsCard(news) {
+function createNewsCard(news, position) {
     const template = document.getElementById(
         "newsCardTemplate"
     );
@@ -225,15 +225,51 @@ function createNewsCard(news) {
     const card =
         template.content.cloneNode(true);
 
+    const article =
+        card.querySelector(".news-card");
+
     const priority =
         card.querySelector(".priority");
 
-    priority.innerText =
-        news.priority.toUpperCase();
+    const headline =
+        card.querySelector(".headline");
 
-    priority.classList.add(
-        news.priority
-    );
+    const fullDetail =
+        card.querySelector(".full-detail");
+
+    const detailText =
+        card.querySelector(".detail-text");
+
+    const expandButton =
+        card.querySelector(".expand-button");
+
+    const listenButton =
+        card.querySelector(".listen-button");
+
+    const fullAudioButton =
+        card.querySelector(".full-audio-button");
+
+    const sourceButton =
+        card.querySelector(".source-button");
+
+
+    // सबसे नई खबर
+    if (position === 0) {
+        article.classList.add(
+            "latest-news"
+        );
+
+        priority.innerText = "LATEST";
+        priority.classList.add("latest");
+    } else {
+        priority.innerText =
+            (news.priority || "medium").toUpperCase();
+
+        priority.classList.add(
+            news.priority || "medium"
+        );
+    }
+
 
     card.querySelector(
         ".news-time"
@@ -241,69 +277,137 @@ function createNewsCard(news) {
         news.published
     );
 
-    card.querySelector(
-        ".headline"
-    ).innerText = news.title;
+
+    headline.innerText =
+        news.title || "खबर उपलब्ध नहीं है";
+
 
     card.querySelector(
         ".summary"
-    ).innerText = news.summary;
+    ).innerText =
+        news.summary || news.title;
+
 
     card.querySelector(
         ".impact"
     ).innerText =
-        `Impact: ${news.impact}`;
+        `प्रभाव: ${news.impact || "medium"}`;
+
 
     card.querySelector(
         ".sentiment"
     ).innerText =
-        `Sentiment: ${news.sentiment}`;
+        `भावना: ${news.sentiment || "neutral"}`;
+
 
     card.querySelector(
         ".source"
     ).innerText =
-        `Source: ${news.source}`;
+        `स्रोत: ${news.source || "Unknown"}`;
+
 
     const affectedList =
-        card.querySelector(
-            ".affected-list"
+        card.querySelector(".affected-list");
+
+    (news.affected || []).forEach(item => {
+        const tag =
+            document.createElement("span");
+
+        tag.innerText = item;
+
+        affectedList.appendChild(tag);
+    });
+
+
+    detailText.innerText =
+        news.details ||
+        news.summary ||
+        "इस खबर की पूरी जानकारी उपलब्ध नहीं है।";
+
+
+    const fullHindiNews = [
+        "महत्वपूर्ण खबर।",
+        news.title || "",
+        news.details || news.summary || ""
+    ].join(" ");
+
+
+    function toggleFullNews() {
+        const isHidden =
+            fullDetail.classList.contains(
+                "hidden"
+            );
+
+        fullDetail.classList.toggle(
+            "hidden"
         );
 
-    if (news.affected) {
-        news.affected.forEach(item => {
+        expandButton.innerText =
+            isHidden
+                ? "खबर बंद करें"
+                : "पूरी खबर खोलें";
 
-            const tag =
-                document.createElement("span");
-
-            tag.innerText = item;
-
-            affectedList.appendChild(tag);
-
-        });
+        if (isHidden) {
+            fullDetail.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
+        }
     }
 
-    card.querySelector(
-        ".listen-button"
-    ).onclick = function () {
 
-        speakNews(
-            `महत्वपूर्ण खबर। ${news.title}. ${news.summary}`
-        );
+    // Headline पर click करने पर पूरी detail
+    headline.addEventListener(
+        "click",
+        toggleFullNews
+    );
 
-    };
 
-    const detailsButton =
-        card.querySelector(
-            ".details-button"
-        );
+    headline.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+                event.preventDefault();
+                toggleFullNews();
+            }
+        }
+    );
+
+
+    expandButton.addEventListener(
+        "click",
+        toggleFullNews
+    );
+
+
+    // दोनों audio buttons पूरी Hindi खबर सुनाएँगे
+    listenButton.addEventListener(
+        "click",
+        function () {
+            speakNews(fullHindiNews);
+        }
+    );
+
+
+    fullAudioButton.addEventListener(
+        "click",
+        function () {
+            speakNews(fullHindiNews);
+        }
+    );
+
 
     if (news.link) {
-        detailsButton.href = news.link;
+        sourceButton.href = news.link;
     } else {
-        detailsButton.removeAttribute("href");
-        detailsButton.innerText =
-            "Link unavailable";
+        sourceButton.removeAttribute("href");
+        sourceButton.innerText =
+            "Source उपलब्ध नहीं";
     }
+
 
     return card;
 }
