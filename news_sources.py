@@ -7,80 +7,74 @@ def google_news_rss(query):
     return (
         "https://news.google.com/rss/search"
         f"?q={encoded_query}"
-        "&hl=en-IN"
+        "&hl=hi"
         "&gl=IN"
-        "&ceid=IN:en"
+        "&ceid=IN:hi"
     )
 
 
 NEWS_SOURCES = [
     {
-        "name": "Indian Market News",
+        "name": "भारतीय शेयर बाजार",
         "category": "market",
         "url": google_news_rss(
-            "NIFTY OR SENSEX OR BANKNIFTY OR Indian stock market when:1d"
+            "निफ्टी OR सेंसेक्स OR बैंक निफ्टी OR शेयर बाजार when:1d"
         )
     },
     {
-        "name": "RBI and SEBI News",
+        "name": "RBI और SEBI",
         "category": "market",
         "url": google_news_rss(
-            "RBI OR SEBI OR interest rate OR monetary policy India when:2d"
+            "RBI OR SEBI OR मौद्रिक नीति OR ब्याज दर when:2d"
         )
     },
     {
-        "name": "Company News",
+        "name": "कंपनी समाचार",
         "category": "company",
         "url": google_news_rss(
-            "India company results OR earnings OR dividend OR bonus "
-            "OR acquisition OR resignation when:2d"
+            "कंपनी नतीजे OR डिविडेंड OR बोनस OR अधिग्रहण OR इस्तीफा when:2d"
         )
     },
     {
-        "name": "Global Market News",
+        "name": "वैश्विक बाजार",
         "category": "global",
         "url": google_news_rss(
-            "Federal Reserve OR inflation OR global stock market "
-            "OR recession OR bond yields when:1d"
+            "Federal Reserve OR वैश्विक बाजार OR महंगाई OR मंदी when:1d"
         )
     },
     {
-        "name": "Commodity News",
+        "name": "कमोडिटी",
         "category": "commodity",
         "url": google_news_rss(
-            "crude oil OR gold OR silver OR OPEC OR natural gas when:1d"
+            "कच्चा तेल OR सोना OR चांदी OR OPEC OR प्राकृतिक गैस when:1d"
         )
     },
     {
-        "name": "Geopolitical News",
+        "name": "भू-राजनीतिक समाचार",
         "category": "geopolitical",
         "url": google_news_rss(
-            "war OR sanctions OR ceasefire OR border tension "
-            "OR geopolitical crisis when:1d"
+            "युद्ध OR प्रतिबंध OR युद्धविराम OR सीमा तनाव when:1d"
         )
     },
     {
-        "name": "Military News",
+        "name": "सैन्य समाचार",
         "category": "military",
         "url": google_news_rss(
-            "missile attack OR airstrike OR military conflict "
-            "OR defence ministry when:1d"
+            "मिसाइल हमला OR एयर स्ट्राइक OR सैन्य संघर्ष OR रक्षा मंत्रालय when:1d"
         )
     },
     {
-        "name": "India Weather News",
+        "name": "मौसम समाचार",
         "category": "weather",
         "url": google_news_rss(
-            "IMD OR heavy rain OR cyclone OR heatwave "
-            "OR weather alert India when:1d"
+            "IMD OR भारी बारिश OR चक्रवात OR हीटवेव OR मौसम चेतावनी when:1d"
         )
     },
     {
-        "name": "Disaster News",
+        "name": "प्राकृतिक आपदा",
         "category": "disaster",
         "url": google_news_rss(
-            "earthquake OR tsunami OR flood OR landslide "
-            "OR natural disaster when:1d"
+            "भूकंप OR बाढ़ OR सुनामी OR भूस्खलन OR प्राकृतिक आपदा when:1d"
         )
     }
-]
+]        
