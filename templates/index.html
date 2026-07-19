@@ -244,7 +244,11 @@
 
         </div>
 
-        <h3 class="headline"></h3>
+        <h3
+            class="headline"
+            role="button"
+            tabindex="0"
+        ></h3>
 
         <p class="summary"></p>
 
@@ -260,19 +264,39 @@
 
         <div class="affected-list"></div>
 
+        <div class="full-detail hidden">
+
+            <h4>पूरी खबर</h4>
+
+            <p class="detail-text"></p>
+
+            <div class="detail-actions">
+
+                <button class="full-audio-button">
+                    🔊 पूरी खबर सुनें
+                </button>
+
+                <a
+                    class="source-button"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Original Source
+                </a>
+
+            </div>
+
+        </div>
+
         <div class="news-actions">
 
             <button class="listen-button">
-                ▶ सुनें
+                ▶ पूरी खबर सुनें
             </button>
 
-            <a
-                class="details-button"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                पूरी खबर
-            </a>
+            <button class="expand-button">
+                पूरी खबर खोलें
+            </button>
 
         </div>
 
