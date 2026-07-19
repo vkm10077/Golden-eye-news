@@ -1,154 +1,91 @@
 import hashlib
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from functools import lru_cache
 
 import feedparser
 import requests
 from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
-from deep_translator import GoogleTranslator
 
 from news_sources import NEWS_SOURCES
 
+
 CRITICAL_WORDS = [
+    "युद्ध",
+    "मिसाइल",
+    "हमला",
+    "एयर स्ट्राइक",
+    "विस्फोट",
+    "भूकंप",
+    "सुनामी",
+    "चक्रवात",
+    "बाजार में भारी गिरावट",
+    "आपातकाल",
     "war",
     "missile",
-    "airstrike",
     "attack",
-    "explosion",
     "earthquake",
     "tsunami",
-    "cyclone",
-    "market crash",
-    "trading halt",
-    "emergency",
-    "bank failure",
-    "invasion"
+    "cyclone"
 ]
 
 
 HIGH_WORDS = [
     "rbi",
     "sebi",
-    "federal reserve",
-    "fed",
-    "interest rate",
-    "inflation",
-    "sanctions",
-    "ceasefire",
-    "crude oil",
-    "opec",
-    "heavy rain",
-    "flood",
-    "earnings",
-    "results",
+    "ब्याज दर",
+    "मौद्रिक नीति",
+    "महंगाई",
+    "प्रतिबंध",
+    "युद्धविराम",
+    "कच्चा तेल",
+    "भारी बारिश",
+    "बाढ़",
+    "कंपनी नतीजे",
+    "डिविडेंड",
+    "बोनस",
+    "अधिग्रहण",
+    "इस्तीफा",
     "fraud",
-    "resignation",
-    "acquisition",
-    "merger",
-    "dividend",
-    "bonus"
+    "results",
+    "dividend"
 ]
 
 
 POSITIVE_WORDS = [
-    "surge",
+    "तेजी",
+    "बढ़त",
+    "रिकॉर्ड ऊंचाई",
+    "मुनाफा बढ़ा",
+    "डिविडेंड",
+    "बोनस",
+    "बायबैक",
+    "वृद्धि",
+    "मंजूरी",
     "gain",
-    "record high",
-    "profit rises",
-    "beats estimates",
-    "order win",
-    "approval",
-    "dividend",
-    "bonus",
-    "buyback",
     "growth",
-    "rate cut"
+    "surge"
 ]
 
 
 NEGATIVE_WORDS = [
+    "गिरावट",
+    "नुकसान",
+    "घाटा",
+    "धोखाधड़ी",
+    "इस्तीफा",
+    "युद्ध",
+    "हमला",
+    "प्रतिबंध",
+    "भूकंप",
+    "चक्रवात",
+    "बाढ़",
+    "संकट",
     "fall",
-    "drop",
     "loss",
-    "fraud",
-    "resignation",
-    "war",
-    "attack",
-    "sanctions",
-    "earthquake",
-    "cyclone",
-    "flood",
-    "default",
-    "crash",
-    "rate hike"
+    "crash"
 ]
-
-
-SECTOR_KEYWORDS = {
-    "crude oil": [
-        "Oil & Gas",
-        "Aviation",
-        "Paints",
-        "Tyres"
-    ],
-    "gold": [
-        "Gold",
-        "Jewellery",
-        "Metals"
-    ],
-    "interest rate": [
-        "Banks",
-        "NBFC",
-        "Real Estate",
-        "Auto"
-    ],
-    "rbi": [
-        "NIFTY",
-        "BANKNIFTY",
-        "Banks",
-        "NBFC"
-    ],
-    "sebi": [
-        "Capital Market",
-        "Broking",
-        "NIFTY"
-    ],
-    "federal reserve": [
-        "Global Markets",
-        "IT",
-        "Metals",
-        "USD/INR"
-    ],
-    "war": [
-        "Defence",
-        "Crude Oil",
-        "Gold",
-        "Shipping"
-    ],
-    "sanctions": [
-        "Oil & Gas",
-        "Metals",
-        "Currency"
-    ],
-    "cyclone": [
-        "Agriculture",
-        "Insurance",
-        "Logistics"
-    ],
-    "flood": [
-        "Agriculture",
-        "Insurance",
-        "Logistics"
-    ],
-    "earnings": [
-        "Stock Specific"
-    ],
-    "results": [
-        "Stock Specific"
-    ]
-}
 
 
 def clean_text(value):
@@ -170,25 +107,21 @@ def clean_text(value):
 
 
 def get_published_time(entry):
-    for field in [
-        "published",
-        "updated",
-        "created"
-    ]:
+    for field in ["published", "updated", "created"]:
         value = entry.get(field)
 
         if not value:
             continue
 
         try:
-            parsed_time = date_parser.parse(value)
+            parsed = date_parser.parse(value)
 
-            if parsed_time.tzinfo is None:
-                parsed_time = parsed_time.replace(
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(
                     tzinfo=timezone.utc
                 )
 
-            return parsed_time.astimezone(
+            return parsed.astimezone(
                 timezone.utc
             ).isoformat()
 
@@ -201,72 +134,106 @@ def get_published_time(entry):
 
 
 def get_priority(text):
-    text = text.lower()
+    lowered = text.lower()
 
-    for word in CRITICAL_WORDS:
-        if word in text:
-            return "critical", "high"
+    if any(word.lower() in lowered for word in CRITICAL_WORDS):
+        return "critical", "high"
 
-    for word in HIGH_WORDS:
-        if word in text:
-            return "high", "high"
+    if any(word.lower() in lowered for word in HIGH_WORDS):
+        return "high", "high"
 
     return "medium", "medium"
 
 
 def get_sentiment(text):
-    text = text.lower()
+    lowered = text.lower()
 
-    positive_score = 0
-    negative_score = 0
+    positive = sum(
+        word.lower() in lowered
+        for word in POSITIVE_WORDS
+    )
 
-    for word in POSITIVE_WORDS:
-        if word in text:
-            positive_score += 1
+    negative = sum(
+        word.lower() in lowered
+        for word in NEGATIVE_WORDS
+    )
 
-    for word in NEGATIVE_WORDS:
-        if word in text:
-            negative_score += 1
-
-    if positive_score > negative_score:
+    if positive > negative:
         return "positive"
 
-    if negative_score > positive_score:
+    if negative > positive:
         return "negative"
 
     return "neutral"
 
 
-def get_affected_sectors(text):
-    text = text.lower()
-    sectors = []
+def get_affected(text):
+    lowered = text.lower()
+    affected = []
 
-    for keyword, sector_list in SECTOR_KEYWORDS.items():
-        if keyword in text:
-            sectors.extend(sector_list)
+    mapping = {
+        "कच्चा तेल": [
+            "Oil & Gas",
+            "Aviation",
+            "Paints"
+        ],
+        "rbi": [
+            "NIFTY",
+            "BANKNIFTY",
+            "Banks",
+            "NBFC"
+        ],
+        "sebi": [
+            "Capital Market",
+            "Broking"
+        ],
+        "ब्याज दर": [
+            "Banks",
+            "NBFC",
+            "Real Estate",
+            "Auto"
+        ],
+        "युद्ध": [
+            "Defence",
+            "Crude Oil",
+            "Gold"
+        ],
+        "भारी बारिश": [
+            "Agriculture",
+            "Insurance",
+            "Logistics"
+        ],
+        "बाढ़": [
+            "Agriculture",
+            "Insurance",
+            "Logistics"
+        ],
+        "कंपनी नतीजे": [
+            "Stock Specific"
+        ]
+    }
 
-    unique_sectors = []
+    for keyword, sectors in mapping.items():
+        if keyword in lowered:
+            affected.extend(sectors)
 
-    for sector in sectors:
-        if sector not in unique_sectors:
-            unique_sectors.append(sector)
+    unique = []
 
-    if not unique_sectors:
-        unique_sectors.append(
-            "General Market"
-        )
+    for item in affected:
+        if item not in unique:
+            unique.append(item)
 
-    return unique_sectors[:6]
+    return unique[:6] or ["General Market"]
 
 
 def create_news_id(title, link):
-    value = f"{title}|{link}"
+    raw = f"{title}|{link}".encode(
+        "utf-8",
+        errors="ignore"
+    )
 
     return hashlib.sha1(
-        value.encode(
-            "utf-8",
-            errors="ignore"
-        )
+        raw
     ).hexdigest()[:16]
 
 
@@ -276,9 +243,17 @@ def create_summary(title, description):
     if not description:
         return title
 
-    if len(description) > 260:
+    # Google News summary में source आदि हटाने का प्रयास
+    description = re.sub(
+        r"\s+View Full Coverage.*$",
+        "",
+        description,
+        flags=re.IGNORECASE
+    )
+
+    if len(description) > 400:
         description = (
-            description[:257]
+            description[:397]
             .rsplit(" ", 1)[0]
             + "..."
         )
@@ -287,61 +262,53 @@ def create_summary(title, description):
 
 
 def fetch_source(source):
-    feed = feedparser.parse(
-        source["url"]
-    )
+    try:
+        response = requests.get(
+            source["url"],
+            timeout=10,
+            headers={
+                "User-Agent": "Mozilla/5.0 GoldenEyeNews/1.0"
+            }
+        )
+
+        response.raise_for_status()
+
+        feed = feedparser.parse(
+            response.content
+        )
+
+    except Exception as error:
+        print(
+            "RSS FETCH ERROR:",
+            source["name"],
+            error
+        )
+
+        return []
 
     news_items = []
 
-    # Speed बनाए रखने के लिए प्रत्येक source की latest 12 खबरें
-    for entry in feed.entries[:12]:
-        original_title = clean_text(
+    for entry in feed.entries[:10]:
+        title = clean_text(
             entry.get("title", "")
         )
 
-        if not original_title:
+        if not title:
             continue
 
-        article_link = entry.get(
-            "link",
-            ""
-        )
+        link = entry.get("link", "")
 
-        rss_description = (
+        description = (
             entry.get("summary", "")
             or entry.get("description", "")
         )
 
-        original_summary = create_summary(
-            original_title,
-            rss_description
+        summary = create_summary(
+            title,
+            description
         )
 
-        original_details = fetch_article_details(
-            article_link
-        )
-
-        if not original_details:
-            original_details = original_summary
-
-        # Hindi translation
-        hindi_title = translate_to_hindi(
-            original_title
-        )
-
-        hindi_summary = translate_to_hindi(
-            original_summary
-        )
-
-        hindi_details = translate_to_hindi(
-            original_details
-        )
-
-        combined_text = (
-            f"{original_title} "
-            f"{original_summary} "
-            f"{original_details}"
-        )
+        combined_text = f"{title} {summary}"
 
         priority, impact = get_priority(
             combined_text
@@ -349,106 +316,117 @@ def fetch_source(source):
 
         news_items.append({
             "id": create_news_id(
-                original_title,
-                article_link
+                title,
+                link
             ),
-
-            "title": hindi_title,
-            "summary": hindi_summary,
-            "details": hindi_details,
-
-            "original_title": original_title,
-
+            "title": title,
+            "summary": summary,
+            "details": summary,
             "category": source["category"],
             "priority": priority,
             "impact": impact,
-
             "sentiment": get_sentiment(
                 combined_text
             ),
-
-            "affected": get_affected_sectors(
+            "affected": get_affected(
                 combined_text
             ),
-
             "source": source["name"],
-
             "published": get_published_time(
                 entry
             ),
-
-            "link": article_link,
+            "link": link,
             "verified": True
         })
 
     return news_items
-    
+
+
 def remove_duplicates(news_items):
     unique_news = []
-    seen_titles = set()
+    seen = set()
 
-    for news in news_items:
-        title_key = re.sub(
-            r"[^a-z0-9]+",
+    for item in news_items:
+        key = re.sub(
+            r"[^a-zA-Z0-9\u0900-\u097F]+",
             " ",
-            news["title"].lower()
+            item["title"].lower()
         ).strip()
 
-        title_key = " ".join(
-            title_key.split()[:12]
+        key = " ".join(
+            key.split()[:10]
         )
 
-        if title_key in seen_titles:
+        if key in seen:
             continue
 
-        seen_titles.add(title_key)
-        unique_news.append(news)
+        seen.add(key)
+        unique_news.append(item)
 
     return unique_news
 
-def sort_news(news_items):
-    def news_timestamp(item):
-        try:
-            published_time = date_parser.parse(
-                item.get("published", "")
+
+def news_timestamp(item):
+    try:
+        published = date_parser.parse(
+            item.get("published", "")
+        )
+
+        if published.tzinfo is None:
+            published = published.replace(
+                tzinfo=timezone.utc
             )
 
-            if published_time.tzinfo is None:
-                published_time = published_time.replace(
-                    tzinfo=timezone.utc
-                )
+        return published.timestamp()
 
-            return published_time.timestamp()
+    except Exception:
+        return 0
 
-        except Exception:
-            return 0
 
+def sort_news(news_items):
+    # सबसे नई खबर हमेशा सबसे ऊपर
     return sorted(
         news_items,
         key=news_timestamp,
         reverse=True
     )
 
+
 def get_news(category="all", limit=80):
+    selected_sources = [
+        source
+        for source in NEWS_SOURCES
+        if (
+            category == "all"
+            or source["category"] == category
+        )
+    ]
+
     all_news = []
 
-    for source in NEWS_SOURCES:
-        if (
-            category != "all"
-            and source["category"] != category
-        ):
-            continue
+    # सभी feeds parallel load होंगी
+    with ThreadPoolExecutor(
+        max_workers=6
+    ) as executor:
 
-        try:
-            source_news = fetch_source(source)
-            all_news.extend(source_news)
-
-        except Exception as error:
-            print(
-                "NEWS SOURCE ERROR:",
-                source["name"],
-                error
+        futures = [
+            executor.submit(
+                fetch_source,
+                source
             )
+            for source in selected_sources
+        ]
+
+        for future in as_completed(futures):
+            try:
+                all_news.extend(
+                    future.result()
+                )
+            except Exception as error:
+                print(
+                    "SOURCE THREAD ERROR:",
+                    error
+                )
 
     all_news = remove_duplicates(
         all_news
@@ -457,5 +435,30 @@ def get_news(category="all", limit=80):
     all_news = sort_news(
         all_news
     )
+
+    if not all_news:
+        return [{
+            "id": "golden-eye-feed-error",
+            "title": "अभी live news feed उपलब्ध नहीं हो पाई",
+            "summary": (
+                "कुछ news sources ने समय पर उत्तर नहीं दिया। "
+                "एक मिनट बाद Refresh दबाएँ।"
+            ),
+            "details": (
+                "Golden Eye server चल रहा है, लेकिन RSS sources "
+                "से फिलहाल data प्राप्त नहीं हुआ।"
+            ),
+            "category": "market",
+            "priority": "medium",
+            "impact": "medium",
+            "sentiment": "neutral",
+            "affected": ["Golden Eye"],
+            "source": "Golden Eye",
+            "published": datetime.now(
+                timezone.utc
+            ).isoformat(),
+            "link": "",
+            "verified": False
+        }]
 
     return all_news[:limit]
