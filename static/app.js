@@ -431,11 +431,14 @@ function renderNews(newsItems) {
         return;
     }
 
-    newsItems.forEach(news => {
-        container.appendChild(
-            createNewsCard(news)
-        );
-    });
+    newsItems.forEach((news, position) => {
+    container.appendChild(
+        createNewsCard(
+            news,
+            position
+        )
+    );
+});
 }
 
 
