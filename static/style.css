@@ -1225,3 +1225,215 @@ a:focus-visible {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ===========================================
+   AUDIO SECTION
+=========================================== */
+
+.audio-control-section{
+    margin:20px 0;
+    padding:16px;
+    background:#111827;
+    border-radius:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.audio-status-area{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.audio-icon{
+    font-size:28px;
+}
+
+.audio-status-area strong{
+    display:block;
+    color:#ffffff;
+}
+
+#audio-status-text{
+    color:#cbd5e1;
+    font-size:13px;
+    margin-top:4px;
+}
+
+.audio-button-group{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.audio-toggle-button,
+.audio-stop-button,
+.listen-card-button,
+.listen-news-button{
+
+    background:#2563eb;
+    color:#ffffff;
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    font-weight:600;
+    transition:.25s;
+}
+
+.audio-toggle-button:hover,
+.audio-stop-button:hover,
+.listen-card-button:hover,
+.listen-news-button:hover{
+
+    transform:translateY(-2px);
+}
+
+.audio-enabled{
+    background:#16a34a !important;
+}
+
+.audio-stop-button{
+    background:#dc2626;
+}
+
+
+/* ===========================================
+   NEWS CARD
+=========================================== */
+
+.news-card-actions{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+    flex-wrap:wrap;
+}
+
+
+/* ===========================================
+   MODAL
+=========================================== */
+
+.modal{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+}
+
+.modal.hidden{
+    display:none;
+}
+
+.modal-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.75);
+}
+
+.modal-content{
+
+    position:relative;
+
+    max-width:760px;
+
+    width:95%;
+
+    margin:40px auto;
+
+    background:#0f172a;
+
+    color:#fff;
+
+    border-radius:16px;
+
+    padding:22px;
+
+    z-index:2;
+
+    max-height:90vh;
+
+    overflow:auto;
+}
+
+.modal-close{
+
+    position:absolute;
+
+    right:15px;
+
+    top:10px;
+
+    font-size:28px;
+
+    background:none;
+
+    border:none;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+.modal-action-group{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+    margin-top:20px;
+}
+
+.read-full-button{
+
+    background:#2563eb;
+
+    color:white;
+
+    text-decoration:none;
+
+    padding:10px 16px;
+
+    border-radius:10px;
+}
+
+body.modal-open{
+    overflow:hidden;
+}
+
+
+/* ===========================================
+   MOBILE
+=========================================== */
+
+@media(max-width:768px){
+
+.audio-control-section{
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.audio-button-group{
+    width:100%;
+}
+
+.audio-toggle-button,
+.audio-stop-button,
+.listen-card-button,
+.listen-news-button,
+.read-full-button{
+
+    width:100%;
+    text-align:center;
+}
+
+.modal-content{
+    width:96%;
+    margin:20px auto;
+}
+
+}
