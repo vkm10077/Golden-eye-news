@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Golden AI Intelligence Live News Dashboard"
+    >
+
+    <title>Golden AI Intelligence News</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <!-- ==================================================
+         TOP HEADER
+    =================================================== -->
+
+    <header class="top-header">
+
+        <div class="brand-section">
+
+            <div class="brand-logo">
+                G
+            </div>
+
+            <div>
+                <h1>Golden AI Intelligence</h1>
+
+                <p>
+                    Market, World, Weather और Geopolitical News
+                </p>
+            </div>
+
+        </div>
+
+        <div class="live-status-box">
+
+            <span class="live-dot"></span>
+
+            <span id="news-status">
+                Connecting...
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- ==================================================
+         CONTROLS
+    =================================================== -->
+
+    <section class="control-section">
+
+        <div class="search-box">
+
+            <input
+                type="search"
+                id="news-search"
+                placeholder="News search करें..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="filter-box">
+
+            <select id="category-filter">
+
+                <option value="ALL">
+                    सभी Categories
+                </option>
+
+                <option value="Market">
+                    Global Market
+                </option>
+
+                <option value="Indian Market">
+                    Indian Market
+                </option>
+
+                <option value="Corporate">
+                    Corporate
+                </option>
+
+                <option value="Economy">
+                    Economy
+                </option>
+
+                <option value="Geopolitics">
+                    Geopolitics
+                </option>
+
+                <option value="Military">
+                    Military
+                </option>
+
+                <option value="Weather">
+                    Weather
+                </option>
+
+                <option value="Disaster">
+                    Natural Disaster
+                </option>
+
+                <option value="Commodity">
+                    Commodity
+                </option>
+
+                <option value="Crypto">
+                    Crypto
+                </option>
+
+                <option value="Technology">
+                    Technology
+                </option>
+
+                <option value="World">
+                    World
+                </option>
+
+                <option value="Business">
+                    Business
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="refresh-button"
+            class="refresh-button"
+        >
+            Refresh News
+        </button>
+
+    </section>
+
+
+    <!-- ==================================================
+         SUMMARY PANEL
+    =================================================== -->
+
+    <section class="summary-section">
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Total News
+            </span>
+
+            <strong id="total-news">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                High Impact
+            </span>
+
+            <strong id="high-impact-news">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Visible News
+            </span>
+
+            <strong id="visible-news">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Last Update
+            </span>
+
+            <strong id="last-updated">
+                Waiting...
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         NEWS AREA
+    =================================================== -->
+
+    <main class="main-content">
+
+        <div id="loading-box" class="loading-box">
+
+            <div class="loader"></div>
+
+            <p>
+                Latest intelligence news load हो रही है...
+            </p>
+
+        </div>
+
+
+        <div
+            id="error-box"
+            class="error-box hidden"
+        >
+            News server से connection नहीं हो पाया।
+            Cached news दोबारा load करने की कोशिश की जाएगी।
+        </div>
+
+
+        <section
+            id="news-container"
+            class="news-grid"
+        ></section>
+
+
+        <div
+            id="empty-box"
+            class="empty-box hidden"
+        >
+            इस filter में कोई news नहीं मिली।
+        </div>
+
+    </main>
+
+
+    <!-- ==================================================
+         FOOTER
+    =================================================== -->
+
+    <footer class="footer">
+
+        <p>
+            Golden AI Intelligence News
+        </p>
+
+        <p>
+            Dashboard cached data को हर 10 सेकंड check करता है।
+            Server news sources को हर 60 सेकंड update करता है।
+        </p>
+
+    </footer>
+
+
+    <!-- ==================================================
+         NEWS DETAIL MODAL
+    =================================================== -->
+
+    <div
+        id="news-modal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+    >
+
+        <div class="modal-overlay" id="modal-overlay"></div>
+
+        <div class="modal-content">
+
+            <button
+                type="button"
+                id="modal-close"
+                class="modal-close"
+                aria-label="Close news details"
+            >
+                ×
+            </button>
+
+            <div class="modal-meta">
+
+                <span
+                    id="modal-category"
+                    class="category-badge"
+                ></span>
+
+                <span
+                    id="modal-impact"
+                    class="impact-badge"
+                ></span>
+
+            </div>
+
+            <h2 id="modal-title"></h2>
+
+            <p
+                id="modal-source"
+                class="modal-source"
+            ></p>
+
+            <p
+                id="modal-summary"
+                class="modal-summary"
+            ></p>
+
+            <a
+                id="modal-link"
+                class="read-full-button"
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                पूरी खबर खोलें
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         JAVASCRIPT
+    =================================================== -->
+
+    <script>
+
+        const NEWS_API_URL = "/api/news";
+
+        const DASHBOARD_REFRESH_INTERVAL = 10000;
+
+
+        let allNews = [];
+
+        let currentCategory = "ALL";
+
+        let currentSearchText = "";
+
+        let requestInProgress = false;
+
+        let lastNewsSignature = "";
+
+
+        const newsContainer =
+            document.getElementById("news-container");
+
+        const loadingBox =
+            document.getElementById("loading-box");
+
+        const errorBox =
+            document.getElementById("error-box");
+
+        const emptyBox =
+            document.getElementById("empty-box");
+
+        const newsStatus =
+            document.getElementById("news-status");
+
+        const totalNews =
+            document.getElementById("total-news");
+
+        const visibleNews =
+            document.getElementById("visible-news");
+
+        const highImpactNews =
+            document.getElementById("high-impact-news");
+
+        const lastUpdated =
+            document.getElementById("last-updated");
+
+        const categoryFilter =
+            document.getElementById("category-filter");
+
+        const newsSearch =
+            document.getElementById("news-search");
+
+        const refreshButton =
+            document.getElementById("refresh-button");
+
+
+        const newsModal =
+            document.getElementById("news-modal");
+
+        const modalOverlay =
+            document.getElementById("modal-overlay");
+
+        const modalClose =
+            document.getElementById("modal-close");
+
+        const modalCategory =
+            document.getElementById("modal-category");
+
+        const modalImpact =
+            document.getElementById("modal-impact");
+
+        const modalTitle =
+            document.getElementById("modal-title");
+
+        const modalSource =
+            document.getElementById("modal-source");
+
+        const modalSummary =
+            document.getElementById("modal-summary");
+
+        const modalLink =
+            document.getElementById("modal-link");
+
+
+        function escapeHtml(value) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent =
+                value === null || value === undefined
+                    ? ""
+                    : String(value);
+
+            return div.innerHTML;
+        }
+
+
+        function safeUrl(value) {
+
+            if (!value) {
+                return "#";
+            }
+
+            try {
+
+                const parsedUrl =
+                    new URL(value, window.location.origin);
+
+                if (
+                    parsedUrl.protocol === "http:"
+                    || parsedUrl.protocol === "https:"
+                ) {
+                    return parsedUrl.href;
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "INVALID NEWS URL:",
+                    value
+                );
+            }
+
+            return "#";
+        }
+
+
+        function formatUpdateTime() {
+
+            return new Intl.DateTimeFormat(
+                "hi-IN",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                }
+            ).format(new Date());
+        }
+
+
+        function getImpactClass(impactLevel) {
+
+            const normalizedLevel =
+                String(
+                    impactLevel || "LOW"
+                ).toUpperCase();
+
+            if (normalizedLevel === "HIGH") {
+                return "impact-high";
+            }
+
+            if (normalizedLevel === "MEDIUM") {
+                return "impact-medium";
+            }
+
+            return "impact-low";
+        }
+
+
+        function getFilteredNews() {
+
+            return allNews.filter(article => {
+
+                const categoryMatches =
+                    currentCategory === "ALL"
+                    || article.category === currentCategory;
+
+                const searchableText = (
+                    String(article.title || "")
+                    + " "
+                    + String(article.summary || "")
+                    + " "
+                    + String(article.source || "")
+                    + " "
+                    + String(article.category || "")
+                ).toLowerCase();
+
+                const searchMatches =
+                    !currentSearchText
+                    || searchableText.includes(
+                        currentSearchText
+                    );
+
+                return (
+                    categoryMatches
+                    && searchMatches
+                );
+            });
+        }
+
+
+        function renderNews() {
+
+            const filteredNews =
+                getFilteredNews();
+
+            visibleNews.textContent =
+                filteredNews.length;
+
+            if (filteredNews.length === 0) {
+
+                newsContainer.innerHTML = "";
+
+                emptyBox.classList.remove("hidden");
+
+                return;
+            }
+
+            emptyBox.classList.add("hidden");
+
+
+            newsContainer.innerHTML =
+                filteredNews.map(
+                    (article, index) => {
+
+                        const title =
+                            escapeHtml(article.title);
+
+                        const summary =
+                            escapeHtml(
+                                article.summary
+                                || "इस खबर का संक्षिप्त विवरण उपलब्ध नहीं है।"
+                            );
+
+                        const source =
+                            escapeHtml(article.source);
+
+                        const category =
+                            escapeHtml(article.category);
+
+                        const published =
+                            escapeHtml(article.published);
+
+                        const impactLevel =
+                            escapeHtml(
+                                article.impact_level || "LOW"
+                            );
+
+                        const impactScore =
+                            Number(
+                                article.impact_score || 0
+                            );
+
+                        const impactClass =
+                            getImpactClass(
+                                article.impact_level
+                            );
+
+                        const articleIndex =
+                            allNews.indexOf(article);
+
+                        return `
+                            <article class="news-card">
+
+                                <div class="card-top-row">
+
+                                    <span class="category-badge">
+                                        ${category}
+                                    </span>
+
+                                    <span
+                                        class="impact-badge ${impactClass}"
+                                    >
+                                        ${impactLevel}
+                                        ${impactScore}%
+                                    </span>
+
+                                </div>
+
+                                <h2 class="news-title">
+                                    ${title}
+                                </h2>
+
+                                <p class="news-summary">
+                                    ${summary}
+                                </p>
+
+                                <div class="news-information">
+
+                                    <span>
+                                        ${source}
+                                    </span>
+
+                                    <span>
+                                        ${published}
+                                    </span>
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="details-button"
+                                    onclick="openNewsDetails(${articleIndex})"
+                                >
+                                    Detail देखें
+                                </button>
+
+                            </article>
+                        `;
+                    }
+                ).join("");
+        }
+
+
+        function updateSummary() {
+
+            totalNews.textContent =
+                allNews.length;
+
+            const highImpactCount =
+                allNews.filter(
+                    article =>
+                        String(
+                            article.impact_level || ""
+                        ).toUpperCase() === "HIGH"
+                ).length;
+
+            highImpactNews.textContent =
+                highImpactCount;
+
+            lastUpdated.textContent =
+                formatUpdateTime();
+        }
+
+
+        function createNewsSignature(news) {
+
+            return JSON.stringify(
+                news.map(article => [
+                    article.title,
+                    article.link,
+                    article.timestamp
+                ])
+            );
+        }
+
+
+        async function loadLiveNews(forceRender = false) {
+
+            if (requestInProgress) {
+                return;
+            }
+
+            requestInProgress = true;
+
+            refreshButton.disabled = true;
+
+            newsStatus.textContent =
+                "Updating...";
+
+            try {
+
+                const response =
+                    await fetch(
+                        NEWS_API_URL,
+                        {
+                            method: "GET",
+                            cache: "no-store",
+                            headers: {
+                                "Accept": "application/json"
+                            }
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `HTTP ${response.status}`
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message
+                        || "News API failed"
+                    );
+                }
+
+                const receivedNews =
+                    Array.isArray(data.news)
+                        ? data.news
+                        : [];
+
+                const newSignature =
+                    createNewsSignature(
+                        receivedNews
+                    );
+
+                allNews =
+                    receivedNews;
+
+                if (
+                    forceRender
+                    || newSignature
+                        !== lastNewsSignature
+                ) {
+
+                    lastNewsSignature =
+                        newSignature;
+
+                    renderNews();
+                }
+
+                updateSummary();
+
+                loadingBox.classList.add(
+                    "hidden"
+                );
+
+                errorBox.classList.add(
+                    "hidden"
+                );
+
+                newsStatus.textContent =
+                    `Live • ${receivedNews.length} News`;
+
+            } catch (error) {
+
+                console.error(
+                    "LIVE NEWS LOAD ERROR:",
+                    error
+                );
+
+                loadingBox.classList.add(
+                    "hidden"
+                );
+
+                errorBox.classList.remove(
+                    "hidden"
+                );
+
+                newsStatus.textContent =
+                    "Connection Error";
+
+                if (allNews.length === 0) {
+                    newsContainer.innerHTML = "";
+                }
+
+            } finally {
+
+                requestInProgress = false;
+
+                refreshButton.disabled = false;
+            }
+        }
+
+
+        function openNewsDetails(index) {
+
+            const article =
+                allNews[index];
+
+            if (!article) {
+                return;
+            }
+
+            modalCategory.textContent =
+                article.category || "News";
+
+            modalImpact.textContent =
+                `${article.impact_level || "LOW"} `
+                + `${article.impact_score || 0}%`;
+
+            modalImpact.className =
+                "impact-badge "
+                + getImpactClass(
+                    article.impact_level
+                );
+
+            modalTitle.textContent =
+                article.title
+                || "Untitled News";
+
+            modalSource.textContent =
+                `${article.source || "Unknown Source"}`
+                + (
+                    article.published
+                        ? ` • ${article.published}`
+                        : ""
+                );
+
+            modalSummary.textContent =
+                article.summary
+                || "इस खबर का विस्तृत सार उपलब्ध नहीं है।";
+
+            modalLink.href =
+                safeUrl(article.link);
+
+            newsModal.classList.remove(
+                "hidden"
+            );
+
+            document.body.classList.add(
+                "modal-open"
+            );
+        }
+
+
+        function closeNewsDetails() {
+
+            newsModal.classList.add(
+                "hidden"
+            );
+
+            document.body.classList.remove(
+                "modal-open"
+            );
+        }
+
+
+        categoryFilter.addEventListener(
+            "change",
+            function () {
+
+                currentCategory =
+                    this.value;
+
+                renderNews();
+            }
+        );
+
+
+        newsSearch.addEventListener(
+            "input",
+            function () {
+
+                currentSearchText =
+                    this.value
+                        .trim()
+                        .toLowerCase();
+
+                renderNews();
+            }
+        );
+
+
+        refreshButton.addEventListener(
+            "click",
+            function () {
+
+                loadLiveNews(true);
+            }
+        );
+
+
+        modalClose.addEventListener(
+            "click",
+            closeNewsDetails
+        );
+
+
+        modalOverlay.addEventListener(
+            "click",
+            closeNewsDetails
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key === "Escape") {
+                    closeNewsDetails();
+                }
+            }
+        );
+
+
+        window.openNewsDetails =
+            openNewsDetails;
+
+
+        loadLiveNews(true);
+
+
+        setInterval(
+            function () {
+                loadLiveNews(false);
+            },
+            DASHBOARD_REFRESH_INTERVAL
+        );
+
+    </script>
+
+</body>
+</html>
