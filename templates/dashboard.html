@@ -13,6 +13,21 @@
         content="Golden AI Intelligence Live News Dashboard"
     >
 
+    <meta
+        http-equiv="Cache-Control"
+        content="no-cache, no-store, must-revalidate"
+    >
+
+    <meta
+        http-equiv="Pragma"
+        content="no-cache"
+    >
+
+    <meta
+        http-equiv="Expires"
+        content="0"
+    >
+
     <title>Golden AI Intelligence News</title>
 
     <link
@@ -24,7 +39,7 @@
 <body>
 
     <!-- ==================================================
-         TOP HEADER
+         HEADER
     =================================================== -->
 
     <header class="top-header">
@@ -36,7 +51,9 @@
             </div>
 
             <div>
-                <h1>Golden AI Intelligence</h1>
+                <h1>
+                    Golden AI Intelligence
+                </h1>
 
                 <p>
                     Market, World, Weather और Geopolitical News
@@ -45,12 +62,13 @@
 
         </div>
 
+
         <div class="live-status-box">
 
             <span class="live-dot"></span>
 
             <span id="news-status">
-                Connecting...
+                Server से जुड़ रहा है...
             </span>
 
         </div>
@@ -121,7 +139,7 @@
                 </option>
 
                 <option value="Crypto">
-                    Crypto
+                    Cryptocurrency
                 </option>
 
                 <option value="Technology">
@@ -153,7 +171,7 @@
 
 
     <!-- ==================================================
-         SUMMARY PANEL
+         SUMMARY
     =================================================== -->
 
     <section class="summary-section">
@@ -213,17 +231,20 @@
 
 
     <!-- ==================================================
-         NEWS AREA
+         MAIN CONTENT
     =================================================== -->
 
     <main class="main-content">
 
-        <div id="loading-box" class="loading-box">
+        <div
+            id="loading-box"
+            class="loading-box"
+        >
 
             <div class="loader"></div>
 
-            <p>
-                Latest intelligence news load हो रही है...
+            <p id="loading-message">
+                Latest news load हो रही है...
             </p>
 
         </div>
@@ -233,8 +254,7 @@
             id="error-box"
             class="error-box hidden"
         >
-            News server से connection नहीं हो पाया।
-            Cached news दोबारा load करने की कोशिश की जाएगी।
+            News load नहीं हो पाई। Refresh News दबाकर दोबारा कोशिश करें।
         </div>
 
 
@@ -265,8 +285,8 @@
         </p>
 
         <p>
-            Dashboard cached data को हर 10 सेकंड check करता है।
-            Server news sources को हर 60 सेकंड update करता है।
+            Dashboard हर 10 सेकंड cached news check करता है और
+            server लगभग हर 60 सेकंड news sources update करता है।
         </p>
 
     </footer>
@@ -284,7 +304,11 @@
         aria-labelledby="modal-title"
     >
 
-        <div class="modal-overlay" id="modal-overlay"></div>
+        <div
+            class="modal-overlay"
+            id="modal-overlay"
+        ></div>
+
 
         <div class="modal-content">
 
@@ -292,10 +316,11 @@
                 type="button"
                 id="modal-close"
                 class="modal-close"
-                aria-label="Close news details"
+                aria-label="Close"
             >
                 ×
             </button>
+
 
             <div class="modal-meta">
 
@@ -311,17 +336,21 @@
 
             </div>
 
+
             <h2 id="modal-title"></h2>
+
 
             <p
                 id="modal-source"
                 class="modal-source"
             ></p>
 
+
             <p
                 id="modal-summary"
                 class="modal-summary"
             ></p>
+
 
             <a
                 id="modal-link"
@@ -344,10 +373,25 @@
 
     <script>
 
+        "use strict";
+
+
+        /* ==================================================
+           API CONFIGURATION
+        =================================================== */
+
         const NEWS_API_URL = "/api/news";
 
-        const DASHBOARD_REFRESH_INTERVAL = 10000;
+        const NEWS_REFRESH_API_URL = "/api/news/refresh";
 
+        const AUTO_CHECK_INTERVAL_MS = 10000;
+
+        const REQUEST_TIMEOUT_MS = 45000;
+
+
+        /* ==================================================
+           APPLICATION STATE
+        =================================================== */
 
         let allNews = [];
 
@@ -359,12 +403,21 @@
 
         let lastNewsSignature = "";
 
+        let automaticRefreshTimer = null;
+
+
+        /* ==================================================
+           DOM ELEMENTS
+        =================================================== */
 
         const newsContainer =
             document.getElementById("news-container");
 
         const loadingBox =
             document.getElementById("loading-box");
+
+        const loadingMessage =
+            document.getElementById("loading-message");
 
         const errorBox =
             document.getElementById("error-box");
@@ -425,17 +478,21 @@
             document.getElementById("modal-link");
 
 
+        /* ==================================================
+           HELPER FUNCTIONS
+        =================================================== */
+
         function escapeHtml(value) {
 
-            const div =
+            const temporaryElement =
                 document.createElement("div");
 
-            div.textContent =
+            temporaryElement.textContent =
                 value === null || value === undefined
                     ? ""
                     : String(value);
 
-            return div.innerHTML;
+            return temporaryElement.innerHTML;
         }
 
 
@@ -448,7 +505,10 @@
             try {
 
                 const parsedUrl =
-                    new URL(value, window.location.origin);
+                    new URL(
+                        value,
+                        window.location.origin
+                    );
 
                 if (
                     parsedUrl.protocol === "http:"
@@ -461,24 +521,12 @@
 
                 console.error(
                     "INVALID NEWS URL:",
-                    value
+                    value,
+                    error
                 );
             }
 
             return "#";
-        }
-
-
-        function formatUpdateTime() {
-
-            return new Intl.DateTimeFormat(
-                "hi-IN",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit"
-                }
-            ).format(new Date());
         }
 
 
@@ -501,37 +549,177 @@
         }
 
 
-        function getFilteredNews() {
+        function formatLocalTime(dateValue) {
 
-            return allNews.filter(article => {
+            if (!dateValue) {
+                return "Waiting...";
+            }
 
-                const categoryMatches =
-                    currentCategory === "ALL"
-                    || article.category === currentCategory;
+            const date =
+                new Date(dateValue);
 
-                const searchableText = (
-                    String(article.title || "")
-                    + " "
-                    + String(article.summary || "")
-                    + " "
-                    + String(article.source || "")
-                    + " "
-                    + String(article.category || "")
-                ).toLowerCase();
+            if (
+                Number.isNaN(
+                    date.getTime()
+                )
+            ) {
+                return String(dateValue);
+            }
 
-                const searchMatches =
-                    !currentSearchText
-                    || searchableText.includes(
-                        currentSearchText
-                    );
-
-                return (
-                    categoryMatches
-                    && searchMatches
-                );
-            });
+            return new Intl.DateTimeFormat(
+                "hi-IN",
+                {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                }
+            ).format(date);
         }
 
+
+        function createNewsSignature(newsItems) {
+
+            if (!Array.isArray(newsItems)) {
+                return "";
+            }
+
+            return JSON.stringify(
+                newsItems.map(
+                    article => [
+                        article.title || "",
+                        article.link || "",
+                        article.timestamp || "",
+                        article.published_iso || ""
+                    ]
+                )
+            );
+        }
+
+
+        function showLoading(message) {
+
+            loadingMessage.textContent =
+                message || "News load हो रही है...";
+
+            loadingBox.classList.remove(
+                "hidden"
+            );
+        }
+
+
+        function hideLoading() {
+
+            loadingBox.classList.add(
+                "hidden"
+            );
+        }
+
+
+        function showError(message) {
+
+            errorBox.textContent =
+                message
+                || "News load नहीं हो पाई।";
+
+            errorBox.classList.remove(
+                "hidden"
+            );
+        }
+
+
+        function hideError() {
+
+            errorBox.classList.add(
+                "hidden"
+            );
+        }
+
+
+        async function fetchWithTimeout(
+            url,
+            options = {},
+            timeoutMs = REQUEST_TIMEOUT_MS
+        ) {
+
+            const controller =
+                new AbortController();
+
+            const timeoutId =
+                setTimeout(
+                    function () {
+                        controller.abort();
+                    },
+                    timeoutMs
+                );
+
+            try {
+
+                const response =
+                    await fetch(
+                        url,
+                        {
+                            ...options,
+                            signal: controller.signal
+                        }
+                    );
+
+                return response;
+
+            } finally {
+
+                clearTimeout(timeoutId);
+            }
+        }
+
+
+        /* ==================================================
+           FILTERING
+        =================================================== */
+
+        function getFilteredNews() {
+
+            return allNews.filter(
+                function (article) {
+
+                    const articleCategory =
+                        String(
+                            article.category || ""
+                        );
+
+                    const categoryMatches =
+                        currentCategory === "ALL"
+                        || articleCategory === currentCategory;
+
+                    const searchableText = (
+                        String(article.title || "")
+                        + " "
+                        + String(article.summary || "")
+                        + " "
+                        + String(article.source || "")
+                        + " "
+                        + articleCategory
+                    ).toLowerCase();
+
+                    const searchMatches =
+                        currentSearchText === ""
+                        || searchableText.includes(
+                            currentSearchText
+                        );
+
+                    return (
+                        categoryMatches
+                        && searchMatches
+                    );
+                }
+            );
+        }
+
+
+        /* ==================================================
+           NEWS RENDERING
+        =================================================== */
 
         function renderNews() {
 
@@ -539,26 +727,38 @@
                 getFilteredNews();
 
             visibleNews.textContent =
-                filteredNews.length;
+                String(filteredNews.length);
+
 
             if (filteredNews.length === 0) {
 
                 newsContainer.innerHTML = "";
 
-                emptyBox.classList.remove("hidden");
+                emptyBox.classList.remove(
+                    "hidden"
+                );
 
                 return;
             }
 
-            emptyBox.classList.add("hidden");
+
+            emptyBox.classList.add(
+                "hidden"
+            );
 
 
             newsContainer.innerHTML =
                 filteredNews.map(
-                    (article, index) => {
+                    function (article) {
+
+                        const originalIndex =
+                            allNews.indexOf(article);
 
                         const title =
-                            escapeHtml(article.title);
+                            escapeHtml(
+                                article.title
+                                || "Untitled News"
+                            );
 
                         const summary =
                             escapeHtml(
@@ -567,31 +767,40 @@
                             );
 
                         const source =
-                            escapeHtml(article.source);
+                            escapeHtml(
+                                article.source
+                                || "Unknown Source"
+                            );
 
                         const category =
-                            escapeHtml(article.category);
+                            escapeHtml(
+                                article.category
+                                || "News"
+                            );
 
                         const published =
-                            escapeHtml(article.published);
+                            escapeHtml(
+                                article.published
+                                || ""
+                            );
 
                         const impactLevel =
-                            escapeHtml(
-                                article.impact_level || "LOW"
-                            );
+                            String(
+                                article.impact_level
+                                || "LOW"
+                            ).toUpperCase();
 
                         const impactScore =
                             Number(
-                                article.impact_score || 0
+                                article.impact_score
+                                || 0
                             );
 
                         const impactClass =
                             getImpactClass(
-                                article.impact_level
+                                impactLevel
                             );
 
-                        const articleIndex =
-                            allNews.indexOf(article);
 
                         return `
                             <article class="news-card">
@@ -605,19 +814,22 @@
                                     <span
                                         class="impact-badge ${impactClass}"
                                     >
-                                        ${impactLevel}
+                                        ${escapeHtml(impactLevel)}
                                         ${impactScore}%
                                     </span>
 
                                 </div>
 
+
                                 <h2 class="news-title">
                                     ${title}
                                 </h2>
 
+
                                 <p class="news-summary">
                                     ${summary}
                                 </p>
+
 
                                 <div class="news-information">
 
@@ -631,10 +843,11 @@
 
                                 </div>
 
+
                                 <button
                                     type="button"
                                     class="details-button"
-                                    onclick="openNewsDetails(${articleIndex})"
+                                    data-news-index="${originalIndex}"
                                 >
                                     Detail देखें
                                 </button>
@@ -643,47 +856,178 @@
                         `;
                     }
                 ).join("");
+
+
+            attachDetailsButtonEvents();
         }
 
 
-        function updateSummary() {
+        function attachDetailsButtonEvents() {
 
-            totalNews.textContent =
-                allNews.length;
+            const detailButtons =
+                document.querySelectorAll(
+                    ".details-button"
+                );
 
-            const highImpactCount =
-                allNews.filter(
-                    article =>
-                        String(
-                            article.impact_level || ""
-                        ).toUpperCase() === "HIGH"
-                ).length;
+            detailButtons.forEach(
+                function (button) {
 
-            highImpactNews.textContent =
-                highImpactCount;
+                    button.addEventListener(
+                        "click",
+                        function () {
 
-            lastUpdated.textContent =
-                formatUpdateTime();
-        }
+                            const index =
+                                Number(
+                                    button.dataset.newsIndex
+                                );
 
-
-        function createNewsSignature(news) {
-
-            return JSON.stringify(
-                news.map(article => [
-                    article.title,
-                    article.link,
-                    article.timestamp
-                ])
+                            openNewsDetails(index);
+                        }
+                    );
+                }
             );
         }
 
 
-        async function loadLiveNews(forceRender = false) {
+        /* ==================================================
+           SUMMARY UPDATE
+        =================================================== */
+
+        function updateSummary(apiData) {
+
+            totalNews.textContent =
+                String(allNews.length);
+
+
+            const highImpactCount =
+                allNews.filter(
+                    function (article) {
+
+                        return String(
+                            article.impact_level || ""
+                        ).toUpperCase() === "HIGH";
+                    }
+                ).length;
+
+
+            highImpactNews.textContent =
+                String(highImpactCount);
+
+
+            if (
+                apiData
+                && apiData.last_updated
+            ) {
+
+                lastUpdated.textContent =
+                    formatLocalTime(
+                        apiData.last_updated
+                    );
+
+            } else {
+
+                lastUpdated.textContent =
+                    new Intl.DateTimeFormat(
+                        "hi-IN",
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit"
+                        }
+                    ).format(new Date());
+            }
+        }
+
+
+        /* ==================================================
+           API RESPONSE PROCESSING
+        =================================================== */
+
+        function processNewsResponse(
+            apiData,
+            forceRender = false
+        ) {
+
+            if (
+                !apiData
+                || apiData.success !== true
+            ) {
+
+                throw new Error(
+                    apiData?.message
+                    || "News API response failed"
+                );
+            }
+
+
+            const receivedNews =
+                Array.isArray(apiData.news)
+                    ? apiData.news
+                    : [];
+
+
+            const newSignature =
+                createNewsSignature(
+                    receivedNews
+                );
+
+
+            allNews =
+                receivedNews;
+
+
+            if (
+                forceRender
+                || newSignature !== lastNewsSignature
+            ) {
+
+                lastNewsSignature =
+                    newSignature;
+
+                renderNews();
+            }
+
+
+            updateSummary(apiData);
+
+
+            newsStatus.textContent =
+                `Live • ${receivedNews.length} News`;
+
+
+            hideLoading();
+            hideError();
+
+
+            if (receivedNews.length === 0) {
+
+                emptyBox.textContent =
+                    "Server शुरू हो रहा है। News cache बनने में थोड़ा समय लग सकता है।";
+
+                emptyBox.classList.remove(
+                    "hidden"
+                );
+
+            } else {
+
+                emptyBox.textContent =
+                    "इस filter में कोई news नहीं मिली।";
+            }
+        }
+
+
+        /* ==================================================
+           NORMAL LIVE NEWS LOAD
+        =================================================== */
+
+        async function loadLiveNews(
+            forceRender = false
+        ) {
 
             if (requestInProgress) {
                 return;
             }
+
 
             requestInProgress = true;
 
@@ -692,19 +1036,36 @@
             newsStatus.textContent =
                 "Updating...";
 
+
+            if (allNews.length === 0) {
+
+                showLoading(
+                    "Server से latest news load हो रही है..."
+                );
+            }
+
+
             try {
 
+                const requestUrl =
+                    NEWS_API_URL
+                    + "?t="
+                    + Date.now();
+
+
                 const response =
-                    await fetch(
-                        NEWS_API_URL,
+                    await fetchWithTimeout(
+                        requestUrl,
                         {
                             method: "GET",
                             cache: "no-store",
                             headers: {
-                                "Accept": "application/json"
+                                "Accept": "application/json",
+                                "Cache-Control": "no-cache"
                             }
                         }
                     );
+
 
                 if (!response.ok) {
 
@@ -713,54 +1074,16 @@
                     );
                 }
 
-                const data =
+
+                const apiData =
                     await response.json();
 
-                if (!data.success) {
 
-                    throw new Error(
-                        data.message
-                        || "News API failed"
-                    );
-                }
-
-                const receivedNews =
-                    Array.isArray(data.news)
-                        ? data.news
-                        : [];
-
-                const newSignature =
-                    createNewsSignature(
-                        receivedNews
-                    );
-
-                allNews =
-                    receivedNews;
-
-                if (
+                processNewsResponse(
+                    apiData,
                     forceRender
-                    || newSignature
-                        !== lastNewsSignature
-                ) {
-
-                    lastNewsSignature =
-                        newSignature;
-
-                    renderNews();
-                }
-
-                updateSummary();
-
-                loadingBox.classList.add(
-                    "hidden"
                 );
 
-                errorBox.classList.add(
-                    "hidden"
-                );
-
-                newsStatus.textContent =
-                    `Live • ${receivedNews.length} News`;
 
             } catch (error) {
 
@@ -769,20 +1092,28 @@
                     error
                 );
 
-                loadingBox.classList.add(
-                    "hidden"
-                );
 
-                errorBox.classList.remove(
-                    "hidden"
-                );
+                hideLoading();
+
+
+                if (error.name === "AbortError") {
+
+                    showError(
+                        "Server response में समय लग रहा है। कुछ सेकंड बाद Refresh News दबाएँ।"
+                    );
+
+                } else {
+
+                    showError(
+                        "News server से connection नहीं हो पाया: "
+                        + error.message
+                    );
+                }
+
 
                 newsStatus.textContent =
                     "Connection Error";
 
-                if (allNews.length === 0) {
-                    newsContainer.innerHTML = "";
-                }
 
             } finally {
 
@@ -793,31 +1124,160 @@
         }
 
 
+        /* ==================================================
+           MANUAL REFRESH
+        =================================================== */
+
+        async function manuallyRefreshNews() {
+
+            if (requestInProgress) {
+                return;
+            }
+
+
+            requestInProgress = true;
+
+            refreshButton.disabled = true;
+
+            refreshButton.textContent =
+                "Refreshing...";
+
+            newsStatus.textContent =
+                "Sources update हो रहे हैं...";
+
+            showLoading(
+                "सभी news sources से fresh news लाई जा रही है..."
+            );
+
+            hideError();
+
+
+            try {
+
+                const requestUrl =
+                    NEWS_REFRESH_API_URL
+                    + "?t="
+                    + Date.now();
+
+
+                const response =
+                    await fetchWithTimeout(
+                        requestUrl,
+                        {
+                            method: "POST",
+                            cache: "no-store",
+                            headers: {
+                                "Accept": "application/json",
+                                "Cache-Control": "no-cache"
+                            }
+                        },
+                        120000
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `HTTP ${response.status}`
+                    );
+                }
+
+
+                const apiData =
+                    await response.json();
+
+
+                processNewsResponse(
+                    apiData,
+                    true
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "MANUAL REFRESH ERROR:",
+                    error
+                );
+
+
+                hideLoading();
+
+
+                if (error.name === "AbortError") {
+
+                    showError(
+                        "News refresh timeout हो गया। Server background में update कर सकता है। कुछ देर बाद दोबारा खोलें।"
+                    );
+
+                } else {
+
+                    showError(
+                        "Manual refresh पूरा नहीं हुआ: "
+                        + error.message
+                    );
+                }
+
+
+                newsStatus.textContent =
+                    "Refresh Failed";
+
+
+            } finally {
+
+                requestInProgress = false;
+
+                refreshButton.disabled = false;
+
+                refreshButton.textContent =
+                    "Refresh News";
+            }
+        }
+
+
+        /* ==================================================
+           MODAL
+        =================================================== */
+
         function openNewsDetails(index) {
 
             const article =
                 allNews[index];
 
+
             if (!article) {
                 return;
             }
 
+
+            const impactLevel =
+                String(
+                    article.impact_level
+                    || "LOW"
+                ).toUpperCase();
+
+
             modalCategory.textContent =
-                article.category || "News";
+                article.category
+                || "News";
+
 
             modalImpact.textContent =
-                `${article.impact_level || "LOW"} `
+                `${impactLevel} `
                 + `${article.impact_score || 0}%`;
+
 
             modalImpact.className =
                 "impact-badge "
                 + getImpactClass(
-                    article.impact_level
+                    impactLevel
                 );
+
 
             modalTitle.textContent =
                 article.title
                 || "Untitled News";
+
 
             modalSource.textContent =
                 `${article.source || "Unknown Source"}`
@@ -827,16 +1287,22 @@
                         : ""
                 );
 
+
             modalSummary.textContent =
                 article.summary
                 || "इस खबर का विस्तृत सार उपलब्ध नहीं है।";
 
+
             modalLink.href =
-                safeUrl(article.link);
+                safeUrl(
+                    article.link
+                );
+
 
             newsModal.classList.remove(
                 "hidden"
             );
+
 
             document.body.classList.add(
                 "modal-open"
@@ -856,12 +1322,16 @@
         }
 
 
+        /* ==================================================
+           EVENTS
+        =================================================== */
+
         categoryFilter.addEventListener(
             "change",
             function () {
 
                 currentCategory =
-                    this.value;
+                    categoryFilter.value;
 
                 renderNews();
             }
@@ -873,7 +1343,7 @@
             function () {
 
                 currentSearchText =
-                    this.value
+                    newsSearch.value
                         .trim()
                         .toLowerCase();
 
@@ -884,10 +1354,7 @@
 
         refreshButton.addEventListener(
             "click",
-            function () {
-
-                loadLiveNews(true);
-            }
+            manuallyRefreshNews
         );
 
 
@@ -908,27 +1375,80 @@
             function (event) {
 
                 if (event.key === "Escape") {
+
                     closeNewsDetails();
                 }
             }
         );
 
 
-        window.openNewsDetails =
-            openNewsDetails;
-
-
-        loadLiveNews(true);
-
-
-        setInterval(
+        document.addEventListener(
+            "visibilitychange",
             function () {
-                loadLiveNews(false);
-            },
-            DASHBOARD_REFRESH_INTERVAL
+
+                if (
+                    document.visibilityState === "visible"
+                ) {
+
+                    loadLiveNews(true);
+                }
+            }
         );
+
+
+        window.addEventListener(
+            "online",
+            function () {
+
+                loadLiveNews(true);
+            }
+        );
+
+
+        window.addEventListener(
+            "offline",
+            function () {
+
+                newsStatus.textContent =
+                    "Internet Offline";
+
+                showError(
+                    "Internet connection उपलब्ध नहीं है।"
+                );
+            }
+        );
+
+
+        /* ==================================================
+           START APPLICATION
+        =================================================== */
+
+        function startDashboard() {
+
+            loadLiveNews(true);
+
+
+            automaticRefreshTimer =
+                setInterval(
+                    function () {
+
+                        if (
+                            document.visibilityState
+                            === "visible"
+                        ) {
+
+                            loadLiveNews(false);
+                        }
+
+                    },
+                    AUTO_CHECK_INTERVAL_MS
+                );
+        }
+
+
+        startDashboard();
 
     </script>
 
 </body>
-</html>
+</html>                             
