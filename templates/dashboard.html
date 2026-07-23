@@ -171,6 +171,58 @@
 
 
     <!-- ==================================================
+         AUDIO CONTROLS
+    =================================================== -->
+
+    <section class="audio-control-section">
+
+        <div class="audio-status-area">
+
+            <div class="audio-icon">
+                🔊
+            </div>
+
+            <div>
+
+                <strong>
+                    Automatic News Audio
+                </strong>
+
+                <p id="audio-status-text">
+                    नई news सुनने के लिए Auto Audio ON करें।
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="audio-button-group">
+
+            <button
+                type="button"
+                id="audio-toggle-button"
+                class="audio-toggle-button"
+                aria-pressed="false"
+            >
+                Auto Audio OFF
+            </button>
+
+
+            <button
+                type="button"
+                id="audio-stop-button"
+                class="audio-stop-button"
+            >
+                Stop Audio
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==================================================
          SUMMARY
     =================================================== -->
 
@@ -285,8 +337,8 @@
         </p>
 
         <p>
-            Dashboard हर 10 सेकंड cached news check करता है और
-            server लगभग हर 60 सेकंड news sources update करता है।
+            Latest news सबसे ऊपर दिखाई जाती है।
+            Auto Audio ON रहने पर नई खबर आते ही headline और summary सुनाई जाएगी।
         </p>
 
     </footer>
@@ -352,15 +404,28 @@
             ></p>
 
 
-            <a
-                id="modal-link"
-                class="read-full-button"
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                पूरी खबर खोलें
-            </a>
+            <div class="modal-action-group">
+
+                <button
+                    type="button"
+                    id="modal-listen-button"
+                    class="listen-news-button"
+                >
+                    🔊 खबर सुनें
+                </button>
+
+
+                <a
+                    id="modal-link"
+                    class="read-full-button"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    पूरी खबर खोलें
+                </a>
+
+            </div>
 
         </div>
 
@@ -388,6 +453,8 @@
 
         const REQUEST_TIMEOUT_MS = 45000;
 
+        const MAX_AUTOMATIC_NEWS_TO_SPEAK = 3;
+
 
         /* ==================================================
            APPLICATION STATE
@@ -404,6 +471,27 @@
         let lastNewsSignature = "";
 
         let automaticRefreshTimer = null;
+
+        let selectedModalNewsIndex = null;
+
+
+        /* ==================================================
+           AUDIO STATE
+        =================================================== */
+
+        let autoAudioEnabled = false;
+
+        let audioPermissionActivated = false;
+
+        let initialNewsLoaded = false;
+
+        let knownNewsKeys = new Set();
+
+        let speechQueue = [];
+
+        let speechIsRunning = false;
+
+        let availableVoices = [];
 
 
         /* ==================================================
@@ -450,6 +538,16 @@
             document.getElementById("refresh-button");
 
 
+        const audioToggleButton =
+            document.getElementById("audio-toggle-button");
+
+        const audioStopButton =
+            document.getElementById("audio-stop-button");
+
+        const audioStatusText =
+            document.getElementById("audio-status-text");
+
+
         const newsModal =
             document.getElementById("news-modal");
 
@@ -476,6 +574,9 @@
 
         const modalLink =
             document.getElementById("modal-link");
+
+        const modalListenButton =
+            document.getElementById("modal-listen-button");
 
 
         /* ==================================================
@@ -579,6 +680,89 @@
         }
 
 
+        function getArticleTimestamp(article) {
+
+            const directTimestamp =
+                Number(article.timestamp);
+
+            if (
+                Number.isFinite(directTimestamp)
+                && directTimestamp > 0
+            ) {
+                return directTimestamp;
+            }
+
+
+            const publishedIsoTimestamp =
+                Date.parse(
+                    article.published_iso || ""
+                );
+
+            if (
+                Number.isFinite(publishedIsoTimestamp)
+            ) {
+                return publishedIsoTimestamp / 1000;
+            }
+
+
+            const publishedTimestamp =
+                Date.parse(
+                    article.published || ""
+                );
+
+            if (
+                Number.isFinite(publishedTimestamp)
+            ) {
+                return publishedTimestamp / 1000;
+            }
+
+
+            return 0;
+        }
+
+
+        function sortNewsNewestFirst(newsItems) {
+
+            return [...newsItems].sort(
+                function (firstArticle, secondArticle) {
+
+                    return (
+                        getArticleTimestamp(secondArticle)
+                        - getArticleTimestamp(firstArticle)
+                    );
+                }
+            );
+        }
+
+
+        function createArticleKey(article) {
+
+            const link =
+                String(article.link || "")
+                    .trim()
+                    .toLowerCase();
+
+            if (link) {
+                return `link:${link}`;
+            }
+
+            const title =
+                String(article.title || "")
+                    .trim()
+                    .toLowerCase();
+
+            const timestamp =
+                String(
+                    article.timestamp
+                    || article.published_iso
+                    || article.published
+                    || ""
+                );
+
+            return `title:${title}|time:${timestamp}`;
+        }
+
+
         function createNewsSignature(newsItems) {
 
             if (!Array.isArray(newsItems)) {
@@ -587,12 +771,13 @@
 
             return JSON.stringify(
                 newsItems.map(
-                    article => [
-                        article.title || "",
-                        article.link || "",
-                        article.timestamp || "",
-                        article.published_iso || ""
-                    ]
+                    function (article) {
+
+                        return [
+                            createArticleKey(article),
+                            getArticleTimestamp(article)
+                        ];
+                    }
                 )
             );
         }
@@ -656,20 +841,520 @@
 
             try {
 
-                const response =
-                    await fetch(
-                        url,
-                        {
-                            ...options,
-                            signal: controller.signal
-                        }
-                    );
-
-                return response;
+                return await fetch(
+                    url,
+                    {
+                        ...options,
+                        signal: controller.signal
+                    }
+                );
 
             } finally {
 
                 clearTimeout(timeoutId);
+            }
+        }
+
+
+        /* ==================================================
+           AUDIO FUNCTIONS
+        =================================================== */
+
+        function loadSpeechVoices() {
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+                availableVoices = [];
+                return;
+            }
+
+            availableVoices =
+                window.speechSynthesis.getVoices();
+        }
+
+
+        function selectBestVoice(text) {
+
+            if (
+                !availableVoices
+                || availableVoices.length === 0
+            ) {
+                return null;
+            }
+
+
+            const containsHindi =
+                /[\u0900-\u097F]/.test(text);
+
+
+            if (containsHindi) {
+
+                return (
+                    availableVoices.find(
+                        voice =>
+                            voice.lang
+                                .toLowerCase()
+                                .startsWith("hi")
+                    )
+                    || availableVoices.find(
+                        voice =>
+                            voice.lang
+                                .toLowerCase()
+                                .includes("in")
+                    )
+                    || null
+                );
+            }
+
+
+            return (
+                availableVoices.find(
+                    voice =>
+                        voice.lang
+                            .toLowerCase()
+                            .startsWith("en-in")
+                )
+                || availableVoices.find(
+                    voice =>
+                        voice.lang
+                            .toLowerCase()
+                            .startsWith("en")
+                )
+                || null
+            );
+        }
+
+
+        function cleanTextForSpeech(value) {
+
+            const temporaryElement =
+                document.createElement("div");
+
+            temporaryElement.innerHTML =
+                String(value || "");
+
+            const plainText =
+                temporaryElement.textContent
+                || temporaryElement.innerText
+                || "";
+
+            return plainText
+                .replace(/\s+/g, " ")
+                .replace(/https?:\/\/\S+/gi, "")
+                .trim();
+        }
+
+
+        function buildSpeechText(article) {
+
+            const category =
+                cleanTextForSpeech(
+                    article.category || "Latest News"
+                );
+
+            const source =
+                cleanTextForSpeech(
+                    article.source || ""
+                );
+
+            const title =
+                cleanTextForSpeech(
+                    article.title || ""
+                );
+
+            const summary =
+                cleanTextForSpeech(
+                    article.summary || ""
+                );
+
+            const limitedSummary =
+                summary.length > 500
+                    ? summary.slice(0, 500) + "..."
+                    : summary;
+
+
+            return [
+                "नई खबर।",
+                category ? `${category}.` : "",
+                title ? `${title}.` : "",
+                limitedSummary
+                    ? `${limitedSummary}.`
+                    : "",
+                source
+                    ? `Source, ${source}.`
+                    : ""
+            ]
+                .filter(Boolean)
+                .join(" ");
+        }
+
+
+        function stopAllAudio() {
+
+            speechQueue = [];
+
+            speechIsRunning = false;
+
+            if (
+                "speechSynthesis" in window
+            ) {
+                window.speechSynthesis.cancel();
+            }
+
+            audioStatusText.textContent =
+                autoAudioEnabled
+                    ? "Auto Audio ON है। नई खबर आने का इंतजार है।"
+                    : "Audio बंद है।";
+        }
+
+
+        function speakNextQueuedNews() {
+
+            if (speechIsRunning) {
+                return;
+            }
+
+            if (speechQueue.length === 0) {
+
+                audioStatusText.textContent =
+                    autoAudioEnabled
+                        ? "Auto Audio ON है। नई खबर आने का इंतजार है।"
+                        : "Audio बंद है।";
+
+                return;
+            }
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+
+                audioStatusText.textContent =
+                    "इस browser में audio speech supported नहीं है।";
+
+                speechQueue = [];
+
+                return;
+            }
+
+
+            const article =
+                speechQueue.shift();
+
+            const speechText =
+                buildSpeechText(article);
+
+
+            if (!speechText) {
+
+                speakNextQueuedNews();
+
+                return;
+            }
+
+
+            window.speechSynthesis.cancel();
+
+
+            const utterance =
+                new SpeechSynthesisUtterance(
+                    speechText
+                );
+
+
+            const voice =
+                selectBestVoice(speechText);
+
+
+            if (voice) {
+
+                utterance.voice = voice;
+
+                utterance.lang = voice.lang;
+
+            } else {
+
+                utterance.lang =
+                    /[\u0900-\u097F]/.test(speechText)
+                        ? "hi-IN"
+                        : "en-IN";
+            }
+
+
+            utterance.rate = 0.95;
+
+            utterance.pitch = 1;
+
+            utterance.volume = 1;
+
+
+            speechIsRunning = true;
+
+
+            audioStatusText.textContent =
+                `अभी सुनाया जा रहा है: ${
+                    article.title || "Latest News"
+                }`;
+
+
+            utterance.onend =
+                function () {
+
+                    speechIsRunning = false;
+
+                    window.setTimeout(
+                        speakNextQueuedNews,
+                        500
+                    );
+                };
+
+
+            utterance.onerror =
+                function (event) {
+
+                    console.error(
+                        "SPEECH ERROR:",
+                        event
+                    );
+
+                    speechIsRunning = false;
+
+                    window.setTimeout(
+                        speakNextQueuedNews,
+                        500
+                    );
+                };
+
+
+            window.speechSynthesis.speak(
+                utterance
+            );
+        }
+
+
+        function queueArticlesForSpeech(articles) {
+
+            if (
+                !Array.isArray(articles)
+                || articles.length === 0
+            ) {
+                return;
+            }
+
+
+            const alreadyQueuedKeys =
+                new Set(
+                    speechQueue.map(
+                        createArticleKey
+                    )
+                );
+
+
+            articles.forEach(
+                function (article) {
+
+                    const articleKey =
+                        createArticleKey(article);
+
+                    if (
+                        !alreadyQueuedKeys.has(articleKey)
+                    ) {
+
+                        speechQueue.push(article);
+
+                        alreadyQueuedKeys.add(articleKey);
+                    }
+                }
+            );
+
+
+            speakNextQueuedNews();
+        }
+
+
+        function speakSingleArticle(article) {
+
+            if (!article) {
+                return;
+            }
+
+
+            audioPermissionActivated = true;
+
+            stopAllAudio();
+
+            speechQueue = [article];
+
+            speakNextQueuedNews();
+        }
+
+
+        function updateAudioButton() {
+
+            if (autoAudioEnabled) {
+
+                audioToggleButton.textContent =
+                    "Auto Audio ON";
+
+                audioToggleButton.classList.add(
+                    "audio-enabled"
+                );
+
+                audioToggleButton.setAttribute(
+                    "aria-pressed",
+                    "true"
+                );
+
+                audioStatusText.textContent =
+                    "Auto Audio ON है। नई latest news आते ही सुनाई जाएगी।";
+
+            } else {
+
+                audioToggleButton.textContent =
+                    "Auto Audio OFF";
+
+                audioToggleButton.classList.remove(
+                    "audio-enabled"
+                );
+
+                audioToggleButton.setAttribute(
+                    "aria-pressed",
+                    "false"
+                );
+
+                audioStatusText.textContent =
+                    "नई news सुनने के लिए Auto Audio ON करें।";
+            }
+        }
+
+
+        function toggleAutoAudio() {
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+
+                audioStatusText.textContent =
+                    "इस browser में automatic audio supported नहीं है।";
+
+                return;
+            }
+
+
+            autoAudioEnabled =
+                !autoAudioEnabled;
+
+
+            if (autoAudioEnabled) {
+
+                audioPermissionActivated = true;
+
+                loadSpeechVoices();
+
+
+                const activationSpeech =
+                    new SpeechSynthesisUtterance(
+                        "Golden AI automatic news audio चालू हो गया है।"
+                    );
+
+
+                activationSpeech.lang =
+                    "hi-IN";
+
+                activationSpeech.rate =
+                    0.95;
+
+
+                const activationVoice =
+                    selectBestVoice(
+                        activationSpeech.text
+                    );
+
+
+                if (activationVoice) {
+
+                    activationSpeech.voice =
+                        activationVoice;
+
+                    activationSpeech.lang =
+                        activationVoice.lang;
+                }
+
+
+                window.speechSynthesis.cancel();
+
+                window.speechSynthesis.speak(
+                    activationSpeech
+                );
+
+            } else {
+
+                stopAllAudio();
+            }
+
+
+            updateAudioButton();
+        }
+
+
+        function detectAndSpeakNewArticles(
+            previousNewsKeys,
+            latestArticles
+        ) {
+
+            if (
+                !initialNewsLoaded
+            ) {
+
+                knownNewsKeys =
+                    new Set(
+                        latestArticles.map(
+                            createArticleKey
+                        )
+                    );
+
+                initialNewsLoaded = true;
+
+                return;
+            }
+
+
+            const newlyReceivedArticles =
+                latestArticles.filter(
+                    function (article) {
+
+                        const key =
+                            createArticleKey(article);
+
+                        return !previousNewsKeys.has(key);
+                    }
+                );
+
+
+            knownNewsKeys =
+                new Set(
+                    latestArticles.map(
+                        createArticleKey
+                    )
+                );
+
+
+            if (
+                autoAudioEnabled
+                && audioPermissionActivated
+                && newlyReceivedArticles.length > 0
+            ) {
+
+                const articlesToSpeak =
+                    newlyReceivedArticles.slice(
+                        0,
+                        MAX_AUTOMATIC_NEWS_TO_SPEAK
+                    );
+
+
+                queueArticlesForSpeech(
+                    articlesToSpeak
+                );
             }
         }
 
@@ -844,13 +1529,26 @@
                                 </div>
 
 
-                                <button
-                                    type="button"
-                                    class="details-button"
-                                    data-news-index="${originalIndex}"
-                                >
-                                    Detail देखें
-                                </button>
+                                <div class="news-card-actions">
+
+                                    <button
+                                        type="button"
+                                        class="listen-card-button"
+                                        data-news-index="${originalIndex}"
+                                    >
+                                        🔊 सुनें
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="details-button"
+                                        data-news-index="${originalIndex}"
+                                    >
+                                        Detail देखें
+                                    </button>
+
+                                </div>
 
                             </article>
                         `;
@@ -858,16 +1556,17 @@
                 ).join("");
 
 
-            attachDetailsButtonEvents();
+            attachNewsCardEvents();
         }
 
 
-        function attachDetailsButtonEvents() {
+        function attachNewsCardEvents() {
 
             const detailButtons =
                 document.querySelectorAll(
                     ".details-button"
                 );
+
 
             detailButtons.forEach(
                 function (button) {
@@ -882,6 +1581,33 @@
                                 );
 
                             openNewsDetails(index);
+                        }
+                    );
+                }
+            );
+
+
+            const listenButtons =
+                document.querySelectorAll(
+                    ".listen-card-button"
+                );
+
+
+            listenButtons.forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        "click",
+                        function () {
+
+                            const index =
+                                Number(
+                                    button.dataset.newsIndex
+                                );
+
+                            speakSingleArticle(
+                                allNews[index]
+                            );
                         }
                     );
                 }
@@ -966,14 +1692,24 @@
                     : [];
 
 
-            const newSignature =
-                createNewsSignature(
+            const sortedNews =
+                sortNewsNewestFirst(
                     receivedNews
                 );
 
 
+            const previousNewsKeys =
+                new Set(knownNewsKeys);
+
+
+            const newSignature =
+                createNewsSignature(
+                    sortedNews
+                );
+
+
             allNews =
-                receivedNews;
+                sortedNews;
 
 
             if (
@@ -988,18 +1724,24 @@
             }
 
 
+            detectAndSpeakNewArticles(
+                previousNewsKeys,
+                sortedNews
+            );
+
+
             updateSummary(apiData);
 
 
             newsStatus.textContent =
-                `Live • ${receivedNews.length} News`;
+                `Live • ${sortedNews.length} News`;
 
 
             hideLoading();
             hideError();
 
 
-            if (receivedNews.length === 0) {
+            if (sortedNews.length === 0) {
 
                 emptyBox.textContent =
                     "Server शुरू हो रहा है। News cache बनने में थोड़ा समय लग सकता है।";
@@ -1207,7 +1949,7 @@
                 if (error.name === "AbortError") {
 
                     showError(
-                        "News refresh timeout हो गया। Server background में update कर सकता है। कुछ देर बाद दोबारा खोलें।"
+                        "News refresh timeout हो गया। Server background में update कर सकता है।"
                     );
 
                 } else {
@@ -1248,6 +1990,10 @@
             if (!article) {
                 return;
             }
+
+
+            selectedModalNewsIndex =
+                index;
 
 
             const impactLevel =
@@ -1312,6 +2058,9 @@
 
         function closeNewsDetails() {
 
+            selectedModalNewsIndex =
+                null;
+
             newsModal.classList.add(
                 "hidden"
             );
@@ -1358,6 +2107,35 @@
         );
 
 
+        audioToggleButton.addEventListener(
+            "click",
+            toggleAutoAudio
+        );
+
+
+        audioStopButton.addEventListener(
+            "click",
+            stopAllAudio
+        );
+
+
+        modalListenButton.addEventListener(
+            "click",
+            function () {
+
+                if (
+                    selectedModalNewsIndex === null
+                ) {
+                    return;
+                }
+
+                speakSingleArticle(
+                    allNews[selectedModalNewsIndex]
+                );
+            }
+        );
+
+
         modalClose.addEventListener(
             "click",
             closeNewsDetails
@@ -1387,7 +2165,8 @@
             function () {
 
                 if (
-                    document.visibilityState === "visible"
+                    document.visibilityState
+                    === "visible"
                 ) {
 
                     loadLiveNews(true);
@@ -1419,11 +2198,24 @@
         );
 
 
+        if (
+            "speechSynthesis" in window
+        ) {
+
+            loadSpeechVoices();
+
+            window.speechSynthesis.onvoiceschanged =
+                loadSpeechVoices;
+        }
+
+
         /* ==================================================
            START APPLICATION
         =================================================== */
 
         function startDashboard() {
+
+            updateAudioButton();
 
             loadLiveNews(true);
 
@@ -1451,4 +2243,4 @@
     </script>
 
 </body>
-</html>                             
+</html>
