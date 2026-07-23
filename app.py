@@ -166,19 +166,33 @@ def dashboard():
 @app.route("/api/news", methods=["GET"])
 def api_news():
     """
-    Cached news return करता है।
-
-    अगर cache खाली मिले तो API उसी समय पहली cache update की
-    कोशिश करती है।
+    Dashboard को केवल cached news तुरंत return करता है।
+    Browser request के अंदर external news fetch नहीं करता।
     """
+
     try:
-        articles = ensure_news_cache()
+        articles = get_cached_news()
+        status = get_news_status()
 
         response_data = build_news_response(articles)
 
+        response_data["success"] = True
+        response_data["count"] = len(articles)
+        response_data["news"] = articles
+        response_data["last_updated"] = status.get("last_updated")
+        response_data["last_error"] = status.get("last_error")
+        response_data["server_time"] = utc_now_iso()
+
+        if len(articles) == 0:
+            response_data["message"] = (
+                "News updater background में काम कर रहा है।"
+            )
+        else:
+            response_data["message"] = "Cached news loaded successfully"
+
         print(
             "API NEWS SUCCESS | "
-            f"{len(articles)} articles",
+            f"{len(articles)} cached articles",
             flush=True
         )
 
@@ -199,7 +213,6 @@ def api_news():
             "last_error": (
                 f"{type(error).__name__}: {error}"
             ),
-            "update_interval_seconds": 60,
             "server_time": utc_now_iso(),
             "message": "News temporarily unavailable"
         }), 500
