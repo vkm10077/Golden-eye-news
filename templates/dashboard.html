@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Golden AI Intelligence - Global Market Moving News"
+    >
+
+    <meta name="theme-color" content="#020617">
+
+    <title>Golden AI Intelligence</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="top-header">
+
+        <div class="brand-section">
+
+            <div class="brand-icon">
+                G
+            </div>
+
+            <div class="brand-content">
+
+                <h1>
+                    Golden AI Intelligence
+                </h1>
+
+                <p>
+                    Global Market Impact News
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="connectionBadge"
+            class="connection-badge connecting"
+        >
+            <span class="status-dot"></span>
+
+            <span id="connectionText">
+                सर्वर से जुड़ रहा है...
+            </span>
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         CONTROLS
+    ====================================================== -->
+
+    <section class="control-panel">
+
+        <button
+            id="refreshButton"
+            class="control-button refresh-button"
+            type="button"
+        >
+            <span class="button-icon">↻</span>
+
+            <span id="refreshButtonText">
+                अभी अपडेट करें
+            </span>
+        </button>
+
+
+        <button
+            id="autoAudioButton"
+            class="control-button audio-button"
+            type="button"
+        >
+            <span class="button-icon">🔊</span>
+
+            <span id="autoAudioText">
+                Auto Audio चालू करें
+            </span>
+        </button>
+
+
+        <button
+            id="stopAudioButton"
+            class="control-button stop-button"
+            type="button"
+        >
+            <span class="button-icon">■</span>
+
+            <span>
+                Audio रोकें
+            </span>
+        </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         STATUS
+    ====================================================== -->
+
+    <section class="dashboard-status">
+
+        <div class="status-item">
+
+            <span>
+                कुल खबरें
+            </span>
+
+            <strong id="totalNewsCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="status-item">
+
+            <span>
+                नई खबरें
+            </span>
+
+            <strong id="newNewsCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="status-item">
+
+            <span>
+                अंतिम अपडेट
+            </span>
+
+            <strong id="lastUpdatedText">
+                प्रतीक्षा...
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         AUDIO STATUS
+    ====================================================== -->
+
+    <section
+        id="audioStatusPanel"
+        class="audio-status-panel"
+    >
+
+        <div class="audio-status-icon">
+            🎙️
+        </div>
+
+        <div>
+
+            <strong id="audioStatusTitle">
+                Auto Audio बंद है
+            </strong>
+
+            <p id="audioStatusMessage">
+                चालू करने के बाद केवल नई खबरें अपने आप सुनाई जाएँगी।
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FILTERS
+    ====================================================== -->
+
+    <section class="filter-panel">
+
+        <div class="search-box">
+
+            <span>
+                ⌕
+            </span>
+
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Company, country, sector या commodity खोजें..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="filter-row">
+
+            <select
+                id="impactFilter"
+                aria-label="Market impact filter"
+            >
+                <option value="all">
+                    सभी Impact
+                </option>
+
+                <option value="Positive">
+                    Positive
+                </option>
+
+                <option value="Negative">
+                    Negative
+                </option>
+
+                <option value="Neutral">
+                    Neutral
+                </option>
+            </select>
+
+
+            <select
+                id="importanceFilter"
+                aria-label="Importance filter"
+            >
+                <option value="all">
+                    सभी Importance
+                </option>
+
+                <option value="High">
+                    High Impact
+                </option>
+
+                <option value="Medium">
+                    Medium Impact
+                </option>
+
+                <option value="Low">
+                    Low Impact
+                </option>
+            </select>
+
+
+            <select
+                id="categoryFilter"
+                aria-label="Category filter"
+            >
+                <option value="all">
+                    सभी Categories
+                </option>
+            </select>
+
+
+            <button
+                id="clearFiltersButton"
+                class="clear-filter-button"
+                type="button"
+            >
+                Filter साफ करें
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         NEWS HEADING
+    ====================================================== -->
+
+    <section class="news-heading">
+
+        <div>
+
+            <h2>
+                Live Market News
+            </h2>
+
+            <p>
+                सबसे नई market-moving खबर सबसे ऊपर
+            </p>
+
+        </div>
+
+        <strong id="visibleNewsCount">
+            0 खबरें
+        </strong>
+
+    </section>
+
+
+    <!-- =====================================================
+         NEWS LIST
+    ====================================================== -->
+
+    <main
+        id="newsContainer"
+        class="news-container"
+    >
+
+        <section class="loading-card">
+
+            <div class="loading-spinner"></div>
+
+            <h3>
+                खबरें लोड हो रही हैं
+            </h3>
+
+            <p>
+                Golden AI market sources से जुड़ रहा है।
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         FULL NEWS MODAL
+    ====================================================== -->
+
+    <div
+        id="newsModal"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="modalHeadline"
+    >
+
+        <section class="modal-box">
+
+            <header class="modal-header">
+
+                <div class="modal-badges">
+
+                    <span
+                        id="modalImpact"
+                        class="impact-badge impact-neutral"
+                    >
+                        Neutral
+                    </span>
+
+                    <span
+                        id="modalImportance"
+                        class="importance-badge importance-medium"
+                    >
+                        Medium Impact
+                    </span>
+
+                </div>
+
+
+                <button
+                    id="closeModalButton"
+                    class="modal-close-button"
+                    type="button"
+                    aria-label="Modal बंद करें"
+                >
+                    ×
+                </button>
+
+            </header>
+
+
+            <div class="modal-content">
+
+                <h2 id="modalHeadline">
+                    खबर
+                </h2>
+
+
+                <div class="modal-meta">
+
+                    <span id="modalRegion">
+                        Global
+                    </span>
+
+                    <span id="modalCategory">
+                        Market
+                    </span>
+
+                    <span id="modalTime">
+                        समय उपलब्ध नहीं
+                    </span>
+
+                </div>
+
+
+                <section class="modal-detail-section">
+
+                    <h3>
+                        पूरी खबर
+                    </h3>
+
+                    <p id="modalFullNews">
+                        खबर लोड हो रही है...
+                    </p>
+
+                </section>
+
+
+                <section class="modal-detail-section market-reason-section">
+
+                    <h3>
+                        बाजार पर असर क्यों पड़ सकता है
+                    </h3>
+
+                    <p id="modalMarketReason">
+                        जानकारी लोड हो रही है...
+                    </p>
+
+                </section>
+
+
+                <div class="modal-source-text">
+
+                    स्रोत:
+
+                    <strong id="modalSource">
+                        News Source
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <footer class="modal-footer">
+
+                <button
+                    id="modalListenButton"
+                    class="modal-listen-button"
+                    type="button"
+                >
+                    🔊 पूरी खबर सुनें
+                </button>
+
+
+                <a
+                    id="modalSourceLink"
+                    class="modal-source-link"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    मूल खबर खोलें
+                </a>
+
+            </footer>
+
+        </section>
+
+    </div>
+
+
+    <script>
+        "use strict";
+
+
+        /* =====================================================
+           SETTINGS
+        ====================================================== */
+
+        const NEWS_POLL_INTERVAL = 30 * 1000;
+        const REFRESH_CHECK_INTERVAL = 4000;
+        const REFRESH_MAX_CHECKS = 15;
+
+        const AUTO_AUDIO_STORAGE_KEY =
+            "golden_ai_auto_audio_enabled";
+
+        const SPOKEN_NEWS_STORAGE_KEY =
+            "golden_ai_spoken_news_ids";
+
+
+        /* =====================================================
+           APP STATE
+        ====================================================== */
+
+        const appState = {
+            allNews: [],
+            visibleNews: [],
+
+            knownNewsIds: new Set(),
+            newNewsIds: new Set(),
+            spokenNewsIds: new Set(),
+
+            firstLoadComplete: false,
+            isLoading: false,
+            isRefreshing: false,
+
+            autoAudioEnabled: false,
+            audioQueue: [],
+            audioPlaying: false,
+            currentAudioNews: null,
+            currentModalNews: null,
+
+            lastServerUpdate: null,
+            pollingTimer: null,
+            refreshCheckTimer: null
+        };
+
+
+        /* =====================================================
+           DOM ELEMENTS
+        ====================================================== */
+
+        const elements = {
+            connectionBadge:
+                document.getElementById(
+                    "connectionBadge"
+                ),
+
+            connectionText:
+                document.getElementById(
+                    "connectionText"
+                ),
+
+            refreshButton:
+                document.getElementById(
+                    "refreshButton"
+                ),
+
+            refreshButtonText:
+                document.getElementById(
+                    "refreshButtonText"
+                ),
+
+            autoAudioButton:
+                document.getElementById(
+                    "autoAudioButton"
+                ),
+
+            autoAudioText:
+                document.getElementById(
+                    "autoAudioText"
+                ),
+
+            stopAudioButton:
+                document.getElementById(
+                    "stopAudioButton"
+                ),
+
+            totalNewsCount:
+                document.getElementById(
+                    "totalNewsCount"
+                ),
+
+            newNewsCount:
+                document.getElementById(
+                    "newNewsCount"
+                ),
+
+            lastUpdatedText:
+                document.getElementById(
+                    "lastUpdatedText"
+                ),
+
+            audioStatusPanel:
+                document.getElementById(
+                    "audioStatusPanel"
+                ),
+
+            audioStatusTitle:
+                document.getElementById(
+                    "audioStatusTitle"
+                ),
+
+            audioStatusMessage:
+                document.getElementById(
+                    "audioStatusMessage"
+                ),
+
+            searchInput:
+                document.getElementById(
+                    "searchInput"
+                ),
+
+            impactFilter:
+                document.getElementById(
+                    "impactFilter"
+                ),
+
+            importanceFilter:
+                document.getElementById(
+                    "importanceFilter"
+                ),
+
+            categoryFilter:
+                document.getElementById(
+                    "categoryFilter"
+                ),
+
+            clearFiltersButton:
+                document.getElementById(
+                    "clearFiltersButton"
+                ),
+
+            visibleNewsCount:
+                document.getElementById(
+                    "visibleNewsCount"
+                ),
+
+            newsContainer:
+                document.getElementById(
+                    "newsContainer"
+                ),
+
+            newsModal:
+                document.getElementById(
+                    "newsModal"
+                ),
+
+            closeModalButton:
+                document.getElementById(
+                    "closeModalButton"
+                ),
+
+            modalImpact:
+                document.getElementById(
+                    "modalImpact"
+                ),
+
+            modalImportance:
+                document.getElementById(
+                    "modalImportance"
+                ),
+
+            modalHeadline:
+                document.getElementById(
+                    "modalHeadline"
+                ),
+
+            modalRegion:
+                document.getElementById(
+                    "modalRegion"
+                ),
+
+            modalCategory:
+                document.getElementById(
+                    "modalCategory"
+                ),
+
+            modalTime:
+                document.getElementById(
+                    "modalTime"
+                ),
+
+            modalFullNews:
+                document.getElementById(
+                    "modalFullNews"
+                ),
+
+            modalMarketReason:
+                document.getElementById(
+                    "modalMarketReason"
+                ),
+
+            modalSource:
+                document.getElementById(
+                    "modalSource"
+                ),
+
+            modalListenButton:
+                document.getElementById(
+                    "modalListenButton"
+                ),
+
+            modalSourceLink:
+                document.getElementById(
+                    "modalSourceLink"
+                )
+        };
+
+
+        /* =====================================================
+           GENERAL HELPERS
+        ====================================================== */
+
+        function safeText(
+            value,
+            fallback = ""
+        ) {
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return fallback;
+            }
+
+            const text =
+                String(value).trim();
+
+            return text || fallback;
+        }
+
+
+        function escapeHtml(value) {
+            return safeText(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+
+        function normalizeValue(value) {
+            return safeText(
+                value
+            ).toLowerCase();
+        }
+
+
+        function parseTimestamp(value) {
+            if (!value) {
+                return 0;
+            }
+
+            const timestamp =
+                new Date(value).getTime();
+
+            return Number.isNaN(
+                timestamp
+            )
+                ? 0
+                : timestamp;
+        }
+
+
+        function formatDateTime(value) {
+            const timestamp =
+                parseTimestamp(value);
+
+            if (!timestamp) {
+                return "समय उपलब्ध नहीं";
+            }
+
+            return new Intl.DateTimeFormat(
+                "hi-IN",
+                {
+                    dateStyle: "medium",
+                    timeStyle: "short"
+                }
+            ).format(
+                new Date(timestamp)
+            );
+        }
+
+
+        function formatRelativeTime(value) {
+            const timestamp =
+                parseTimestamp(value);
+
+            if (!timestamp) {
+                return "अभी";
+            }
+
+            const difference =
+                Math.max(
+                    0,
+                    Date.now() - timestamp
+                );
+
+            const minute =
+                60 * 1000;
+
+            const hour =
+                60 * minute;
+
+            const day =
+                24 * hour;
+
+            if (difference < minute) {
+                return "अभी";
+            }
+
+            if (difference < hour) {
+                return (
+                    `${Math.floor(
+                        difference / minute
+                    )} मिनट पहले`
+                );
+            }
+
+            if (difference < day) {
+                return (
+                    `${Math.floor(
+                        difference / hour
+                    )} घंटे पहले`
+                );
+            }
+
+            return formatDateTime(value);
+        }
+
+
+        function createFallbackId(news) {
+            const rawValue = [
+                news.headline,
+                news.title,
+                news.url,
+                news.link,
+                news.source,
+                news.published_at,
+                news.published
+            ].join("|");
+
+            let hash = 0;
+
+            for (
+                let index = 0;
+                index < rawValue.length;
+                index += 1
+            ) {
+                hash =
+                    (
+                        (hash << 5)
+                        - hash
+                    )
+                    + rawValue.charCodeAt(
+                        index
+                    );
+
+                hash |= 0;
+            }
+
+            return (
+                `news-${Math.abs(hash)}`
+            );
+        }
+
+
+        function normalizeMarketImpact(value) {
+            const normalized =
+                normalizeValue(value);
+
+            if (
+                normalized === "positive" ||
+                normalized === "bullish" ||
+                normalized === "सकारात्मक"
+            ) {
+                return "Positive";
+            }
+
+            if (
+                normalized === "negative" ||
+                normalized === "bearish" ||
+                normalized === "नकारात्मक"
+            ) {
+                return "Negative";
+            }
+
+            return "Neutral";
+        }
+
+
+        function normalizeImportance(value) {
+            const normalized =
+                normalizeValue(value);
+
+            if (
+                normalized.includes(
+                    "critical"
+                ) ||
+                normalized.includes(
+                    "high"
+                )
+            ) {
+                return "High";
+            }
+
+            if (
+                normalized.includes(
+                    "low"
+                )
+            ) {
+                return "Low";
+            }
+
+            return "Medium";
+        }
+
+
+        function cleanSpeechText(value) {
+            return safeText(value)
+                .replace(
+                    /https?:\/\/\S+/gi,
+                    ""
+                )
+                .replace(
+                    /\b(source|headline|category|impact)\s*:/gi,
+                    ""
+                )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+        }
+
+
+        /* =====================================================
+           STORAGE
+        ====================================================== */
+
+        function loadStoredPreferences() {
+            try {
+                appState.autoAudioEnabled =
+                    localStorage.getItem(
+                        AUTO_AUDIO_STORAGE_KEY
+                    ) === "true";
+
+                const savedSpokenIds =
+                    JSON.parse(
+                        localStorage.getItem(
+                            SPOKEN_NEWS_STORAGE_KEY
+                        ) || "[]"
+                    );
+
+                if (
+                    Array.isArray(
+                        savedSpokenIds
+                    )
+                ) {
+                    appState.spokenNewsIds =
+                        new Set(
+                            savedSpokenIds
+                                .map(String)
+                                .slice(-500)
+                        );
+                }
+
+            } catch (error) {
+                console.warn(
+                    "Stored settings load error:",
+                    error
+                );
+            }
+        }
+
+
+        function saveAudioPreference() {
+            try {
+                localStorage.setItem(
+                    AUTO_AUDIO_STORAGE_KEY,
+                    String(
+                        appState.autoAudioEnabled
+                    )
+                );
+
+            } catch (error) {
+                console.warn(
+                    "Audio preference save error:",
+                    error
+                );
+            }
+        }
+
+
+        function saveSpokenNewsIds() {
+            try {
+                const spokenIds =
+                    Array.from(
+                        appState.spokenNewsIds
+                    ).slice(-500);
+
+                localStorage.setItem(
+                    SPOKEN_NEWS_STORAGE_KEY,
+                    JSON.stringify(
+                        spokenIds
+                    )
+                );
+
+            } catch (error) {
+                console.warn(
+                    "Spoken IDs save error:",
+                    error
+                );
+            }
+        }
+
+
+        /* =====================================================
+           NEWS NORMALIZATION
+        ====================================================== */
+
+        function normalizeNewsItem(rawArticle) {
+            const article =
+                rawArticle || {};
+
+            const headline = safeText(
+                article.headline ||
+                article.title,
+                "Important market news"
+            );
+
+            const id = safeText(
+                article.id ||
+                article.news_id,
+                createFallbackId(article)
+            );
+
+            const fullNews = safeText(
+                article.full_news_hi ||
+                article.detail_hi ||
+                article.summary_hi ||
+                article.full_news ||
+                article.summary ||
+                headline,
+                headline
+            );
+
+            const marketReason = safeText(
+                article.market_reason_hi ||
+                article.market_effect_hi ||
+                article.impact_reason,
+                "इस खबर से market sentiment और संबंधित stocks प्रभावित हो सकते हैं।"
+            );
+
+            const audioText = cleanSpeechText(
+                article.audio_text_hi ||
+                fullNews ||
+                headline
+            );
+
+            return {
+                id,
+                headline,
+
+                headlineHi: safeText(
+                    article.headline_hi,
+                    headline
+                ),
+
+                marketImpact:
+                    normalizeMarketImpact(
+                        article.market_impact ||
+                        article.impact ||
+                        article.sentiment
+                    ),
+
+                importance:
+                    normalizeImportance(
+                        article.importance ||
+                        article.priority
+                    ),
+
+                marketReason,
+                fullNews,
+                audioText,
+
+                category: safeText(
+                    article.category,
+                    "Market"
+                ),
+
+                region: safeText(
+                    article.country ||
+                    article.region,
+                    "Global"
+                ),
+
+                source: safeText(
+                    article.source,
+                    "News Source"
+                ),
+
+                url: safeText(
+                    article.url ||
+                    article.link,
+                    ""
+                ),
+
+                publishedAt: safeText(
+                    article.published_at ||
+                    article.published,
+                    ""
+                ),
+
+                isBreaking: Boolean(
+                    article.is_breaking
+                )
+            };
+        }
+
+
+        function extractNewsArray(payload) {
+            if (Array.isArray(payload)) {
+                return payload;
+            }
+
+            if (
+                payload &&
+                Array.isArray(payload.news)
+            ) {
+                return payload.news;
+            }
+
+            if (
+                payload &&
+                payload.data &&
+                Array.isArray(
+                    payload.data.news
+                )
+            ) {
+                return payload.data.news;
+            }
+
+            return [];
+        }
+
+
+        function sortNewestFirst(newsItems) {
+            return [...newsItems].sort(
+                (firstNews, secondNews) =>
+                    parseTimestamp(
+                        secondNews.publishedAt
+                    )
+                    -
+                    parseTimestamp(
+                        firstNews.publishedAt
+                    )
+            );
+        }
+
+
+        /* =====================================================
+           API
+        ====================================================== */
+
+        async function requestJson(
+            url,
+            options = {}
+        ) {
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method:
+                            options.method ||
+                            "GET",
+
+                        headers: {
+                            "Accept":
+                                "application/json",
+                            ...options.headers
+                        },
+
+                        cache: "no-store"
+                    }
+                );
+
+            let payload = null;
+
+            try {
+                payload =
+                    await response.json();
+
+            } catch (error) {
+                payload = null;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    payload?.message ||
+                    payload?.error ||
+                    `Server error ${response.status}`
+                );
+            }
+
+            return payload;
+        }
+
+
+        /* =====================================================
+           CONNECTION STATUS
+        ====================================================== */
+
+        function setConnectionStatus(
+            status,
+            message
+        ) {
+            elements.connectionBadge
+                .classList.remove(
+                    "connecting",
+                    "connected",
+                    "error"
+                );
+
+            elements.connectionBadge
+                .classList.add(
+                    status
+                );
+
+            elements.connectionText
+                .textContent = message;
+        }
+
+
+        function updateDashboardStatus() {
+            elements.totalNewsCount
+                .textContent =
+                appState.allNews.length;
+
+            elements.newNewsCount
+                .textContent =
+                appState.newNewsIds.size;
+
+            elements.lastUpdatedText
+                .textContent =
+                appState.lastServerUpdate
+                    ? formatRelativeTime(
+                        appState.lastServerUpdate
+                    )
+                    : "प्रतीक्षा...";
+        }
+
+
+        /* =====================================================
+           DYNAMIC CATEGORY FILTER
+        ====================================================== */
+
+        function updateCategoryOptions() {
+            const previousValue =
+                elements.categoryFilter.value;
+
+            const categories =
+                Array.from(
+                    new Set(
+                        appState.allNews
+                            .map(
+                                (news) =>
+                                    news.category
+                            )
+                            .filter(Boolean)
+                    )
+                ).sort(
+                    (first, second) =>
+                        first.localeCompare(
+                            second
+                        )
+                );
+
+            elements.categoryFilter
+                .innerHTML = `
+                    <option value="all">
+                        सभी Categories
+                    </option>
+                    ${
+                        categories
+                            .map(
+                                (category) =>
+                                    `
+                                        <option
+                                            value="${escapeHtml(category)}"
+                                        >
+                                            ${escapeHtml(category)}
+                                        </option>
+                                    `
+                            )
+                            .join("")
+                    }
+                `;
+
+            if (
+                categories.includes(
+                    previousValue
+                )
+            ) {
+                elements.categoryFilter
+                    .value =
+                    previousValue;
+            }
+        }
+
+
+        /* =====================================================
+           FILTERING
+        ====================================================== */
+
+        function applyFilters() {
+            const searchValue =
+                normalizeValue(
+                    elements.searchInput.value
+                );
+
+            const selectedImpact =
+                elements.impactFilter.value;
+
+            const selectedImportance =
+                elements.importanceFilter.value;
+
+            const selectedCategory =
+                elements.categoryFilter.value;
+
+            appState.visibleNews =
+                appState.allNews.filter(
+                    (news) => {
+                        const searchableText =
+                            normalizeValue([
+                                news.headline,
+                                news.headlineHi,
+                                news.marketReason,
+                                news.fullNews,
+                                news.category,
+                                news.region,
+                                news.source
+                            ].join(" "));
+
+                        const searchMatches =
+                            !searchValue ||
+                            searchableText.includes(
+                                searchValue
+                            );
+
+                        const impactMatches =
+                            selectedImpact === "all" ||
+                            news.marketImpact ===
+                                selectedImpact;
+
+                        const importanceMatches =
+                            selectedImportance === "all" ||
+                            news.importance ===
+                                selectedImportance;
+
+                        const categoryMatches =
+                            selectedCategory === "all" ||
+                            news.category ===
+                                selectedCategory;
+
+                        return (
+                            searchMatches &&
+                            impactMatches &&
+                            importanceMatches &&
+                            categoryMatches
+                        );
+                    }
+                );
+
+            renderNews();
+        }
+
+
+        function clearFilters() {
+            elements.searchInput.value = "";
+            elements.impactFilter.value = "all";
+            elements.importanceFilter.value = "all";
+            elements.categoryFilter.value = "all";
+
+            applyFilters();
+        }
+
+
+        /* =====================================================
+           CARD CLASSES
+        ====================================================== */
+
+        function getImpactClass(impact) {
+            if (impact === "Positive") {
+                return "impact-positive";
+            }
+
+            if (impact === "Negative") {
+                return "impact-negative";
+            }
+
+            return "impact-neutral";
+        }
+
+
+        function getImportanceClass(
+            importance
+        ) {
+            if (importance === "High") {
+                return "importance-high";
+            }
+
+            if (importance === "Low") {
+                return "importance-low";
+            }
+
+            return "importance-medium";
+        }
+
+
+        /* =====================================================
+           NEWS RENDERING
+        ====================================================== */
+
+        function createNewsCard(news) {
+            const isNew =
+                appState.newNewsIds.has(
+                    news.id
+                );
+
+            return `
+                <article
+                    class="news-card ${
+                        isNew
+                            ? "new-news-card"
+                            : ""
+                    }"
+                    data-news-id="${escapeHtml(
+                        news.id
+                    )}"
+                >
+
+                    <div class="news-card-top">
+
+                        <div class="news-badges">
+
+                            <span
+                                class="impact-badge ${
+                                    getImpactClass(
+                                        news.marketImpact
+                                    )
+                                }"
+                            >
+                                ${escapeHtml(
+                                    news.marketImpact
+                                )}
+                            </span>
+
+                            <span
+                                class="importance-badge ${
+                                    getImportanceClass(
+                                        news.importance
+                                    )
+                                }"
+                            >
+                                ${escapeHtml(
+                                    news.importance
+                                )} Impact
+                            </span>
+
+                            ${
+                                isNew
+                                    ? `
+                                        <span class="new-update-badge">
+                                            नया अपडेट
+                                        </span>
+                                    `
+                                    : ""
+                            }
+
+                        </div>
+
+
+                        <span class="news-time">
+                            ${escapeHtml(
+                                formatRelativeTime(
+                                    news.publishedAt
+                                )
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <h3 class="news-headline">
+                        ${escapeHtml(
+                            news.headline
+                        )}
+                    </h3>
+
+
+                    <div class="market-reason-box">
+
+                        <strong>
+                            बाजार पर असर:
+                        </strong>
+
+                        <p>
+                            ${escapeHtml(
+                                news.marketReason
+                            )}
+                        </p>
+
+                    </div>
+
+
+                    <div class="news-card-footer">
+
+                        <div class="news-meta">
+
+                            <span>
+                                ${escapeHtml(
+                                    news.region
+                                )}
+                            </span>
+
+                            <span>
+                                ${escapeHtml(
+                                    news.category
+                                )}
+                            </span>
+
+                            <span>
+                                ${escapeHtml(
+                                    news.source
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="news-actions">
+
+                            <button
+                                class="listen-button"
+                                type="button"
+                                data-action="listen"
+                                data-news-id="${escapeHtml(
+                                    news.id
+                                )}"
+                            >
+                                🔊 सुनें
+                            </button>
+
+
+                            <button
+                                class="full-news-button"
+                                type="button"
+                                data-action="details"
+                                data-news-id="${escapeHtml(
+                                    news.id
+                                )}"
+                            >
+                                पूरी खबर
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+            `;
+        }
+
+
+        function renderNews() {
+            elements.visibleNewsCount
+                .textContent =
+                `${appState.visibleNews.length} खबरें`;
+
+            updateDashboardStatus();
+
+            if (
+                appState.visibleNews.length === 0
+            ) {
+                elements.newsContainer
+                    .innerHTML = `
+                        <section class="empty-state-card">
+
+                            <div class="state-icon">
+                                🔎
+                            </div>
+
+                            <h3>
+                                कोई खबर नहीं मिली
+                            </h3>
+
+                            <p>
+                                Search या filter बदलकर दोबारा देखें।
+                            </p>
+
+                        </section>
+                    `;
+
+                return;
+            }
+
+            elements.newsContainer
+                .innerHTML =
+                appState.visibleNews
+                    .map(createNewsCard)
+                    .join("");
+        }
+
+
+        function renderError(message) {
+            elements.newsContainer
+                .innerHTML = `
+                    <section class="error-state-card">
+
+                        <div class="state-icon">
+                            !
+                        </div>
+
+                        <h3>
+                            खबरें लोड नहीं हो सकीं
+                        </h3>
+
+                        <p>
+                            ${escapeHtml(message)}
+                        </p>
+
+                        <button
+                            id="retryButton"
+                            class="retry-button"
+                            type="button"
+                        >
+                            दोबारा प्रयास करें
+                        </button>
+
+                    </section>
+                `;
+
+            const retryButton =
+                document.getElementById(
+                    "retryButton"
+                );
+
+            if (retryButton) {
+                retryButton.addEventListener(
+                    "click",
+                    () => loadNews(true)
+                );
+            }
+        }
+
+
+        /* =====================================================
+           NEWS LOADING
+        ====================================================== */
+
+        async function loadNews(
+            showLoading = false
+        ) {
+            if (appState.isLoading) {
+                return [];
+            }
+
+            appState.isLoading = true;
+
+            if (
+                showLoading &&
+                !appState.firstLoadComplete
+            ) {
+                elements.newsContainer
+                    .innerHTML = `
+                        <section class="loading-card">
+
+                            <div class="loading-spinner"></div>
+
+                            <h3>
+                                खबरें लोड हो रही हैं
+                            </h3>
+
+                            <p>
+                                Golden AI market sources से जुड़ रहा है।
+                            </p>
+
+                        </section>
+                    `;
+            }
+
+            setConnectionStatus(
+                "connecting",
+                "Latest news check हो रही है..."
+            );
+
+            try {
+                const payload =
+                    await requestJson(
+                        "/api/news?limit=150"
+                    );
+
+                const normalizedItems =
+                    extractNewsArray(
+                        payload
+                    )
+                        .map(
+                            normalizeNewsItem
+                        )
+                        .filter(
+                            (news) =>
+                                news.id &&
+                                news.headline
+                        );
+
+                const uniqueMap =
+                    new Map();
+
+                normalizedItems.forEach(
+                    (news) => {
+                        if (
+                            !uniqueMap.has(
+                                news.id
+                            )
+                        ) {
+                            uniqueMap.set(
+                                news.id,
+                                news
+                            );
+                        }
+                    }
+                );
+
+                const sortedNews =
+                    sortNewestFirst(
+                        Array.from(
+                            uniqueMap.values()
+                        )
+                    );
+
+                const incomingNews = [];
+
+                if (
+                    appState.firstLoadComplete
+                ) {
+                    sortedNews.forEach(
+                        (news) => {
+                            if (
+                                !appState
+                                    .knownNewsIds
+                                    .has(news.id)
+                            ) {
+                                appState
+                                    .newNewsIds
+                                    .add(news.id);
+
+                                incomingNews.push(
+                                    news
+                                );
+                            }
+                        }
+                    );
+                }
+
+                appState.allNews =
+                    sortedNews;
+
+                appState.knownNewsIds =
+                    new Set(
+                        sortedNews.map(
+                            (news) =>
+                                news.id
+                        )
+                    );
+
+                appState.lastServerUpdate =
+                    payload.last_updated ||
+                    payload.last_success ||
+                    new Date().toISOString();
+
+                appState.firstLoadComplete =
+                    true;
+
+                updateCategoryOptions();
+                applyFilters();
+
+                setConnectionStatus(
+                    "connected",
+                    payload.refresh_running
+                        ? "नई खबरें तैयार हो रही हैं..."
+                        : "Live connection active"
+                );
+
+                handleIncomingNews(
+                    incomingNews
+                );
+
+                return incomingNews;
+
+            } catch (error) {
+                console.error(
+                    "News load error:",
+                    error
+                );
+
+                setConnectionStatus(
+                    "error",
+                    "Server connection error"
+                );
+
+                if (
+                    appState.allNews.length === 0
+                ) {
+                    renderError(
+                        error.message ||
+                        "Server से संपर्क नहीं हो सका।"
+                    );
+                }
+
+                return [];
+
+            } finally {
+                appState.isLoading = false;
+            }
+        }
+
+
+        /* =====================================================
+           MANUAL REFRESH
+        ====================================================== */
+
+        async function refreshNewsNow() {
+            if (appState.isRefreshing) {
+                return;
+            }
+
+            appState.isRefreshing = true;
+
+            elements.refreshButton.disabled =
+                true;
+
+            elements.refreshButtonText
+                .textContent =
+                "अपडेट हो रहा है...";
+
+            setConnectionStatus(
+                "connecting",
+                "Global sources refresh हो रहे हैं..."
+            );
+
+            const previousUpdate =
+                appState.lastServerUpdate;
+
+            try {
+                await requestJson(
+                    "/api/news/refresh",
+                    {
+                        method: "POST"
+                    }
+                );
+
+                let checkCount = 0;
+
+                while (
+                    checkCount <
+                    REFRESH_MAX_CHECKS
+                ) {
+                    await new Promise(
+                        (resolve) =>
+                            window.setTimeout(
+                                resolve,
+                                REFRESH_CHECK_INTERVAL
+                            )
+                    );
+
+                    const statusPayload =
+                        await requestJson(
+                            "/api/news/status"
+                        );
+
+                    const status =
+                        statusPayload.status ||
+                        {};
+
+                    const updateChanged =
+                        status.last_updated &&
+                        status.last_updated !==
+                            previousUpdate;
+
+                    if (
+                        updateChanged ||
+                        !status.refresh_running
+                    ) {
+                        break;
+                    }
+
+                    checkCount += 1;
+                }
+
+                await loadNews();
+
+                setConnectionStatus(
+                    "connected",
+                    "Latest news updated"
+                );
+
+            } catch (error) {
+                console.error(
+                    "Refresh error:",
+                    error
+                );
+
+                setConnectionStatus(
+                    "error",
+                    "Refresh failed"
+                );
+
+            } finally {
+                appState.isRefreshing =
+                    false;
+
+                elements.refreshButton.disabled =
+                    false;
+
+                elements.refreshButtonText
+                    .textContent =
+                    "अभी अपडेट करें";
+            }
+        }
+
+
+        /* =====================================================
+           MODAL
+        ====================================================== */
+
+        function findNewsById(newsId) {
+            return (
+                appState.allNews.find(
+                    (news) =>
+                        news.id === newsId
+                ) || null
+            );
+        }
+
+
+        async function openNewsModal(news) {
+            if (!news) {
+                return;
+            }
+
+            appState.currentModalNews =
+                news;
+
+            fillModal(news);
+
+            elements.newsModal
+                .classList.add(
+                    "modal-visible"
+                );
+
+            elements.newsModal
+                .setAttribute(
+                    "aria-hidden",
+                    "false"
+                );
+
+            document.body
+                .classList.add(
+                    "modal-open"
+                );
+
+            markNewsAsRead(
+                news.id
+            );
+
+            try {
+                const payload =
+                    await requestJson(
+                        `/api/news/${encodeURIComponent(
+                            news.id
+                        )}`
+                    );
+
+                if (
+                    payload &&
+                    payload.article
+                ) {
+                    const fullArticle =
+                        normalizeNewsItem(
+                            payload.article
+                        );
+
+                    appState.currentModalNews =
+                        fullArticle;
+
+                    fillModal(
+                        fullArticle
+                    );
+                }
+
+            } catch (error) {
+                console.warn(
+                    "Full article API warning:",
+                    error
+                );
+            }
+        }
+
+
+        function fillModal(news) {
+            elements.modalImpact
+                .textContent =
+                news.marketImpact;
+
+            elements.modalImpact
+                .className =
+                `impact-badge ${
+                    getImpactClass(
+                        news.marketImpact
+                    )
+                }`;
+
+            elements.modalImportance
+                .textContent =
+                `${news.importance} Impact`;
+
+            elements.modalImportance
+                .className =
+                `importance-badge ${
+                    getImportanceClass(
+                        news.importance
+                    )
+                }`;
+
+            elements.modalHeadline
+                .textContent =
+                news.headline;
+
+            elements.modalRegion
+                .textContent =
+                news.region;
+
+            elements.modalCategory
+                .textContent =
+                news.category;
+
+            elements.modalTime
+                .textContent =
+                formatDateTime(
+                    news.publishedAt
+                );
+
+            elements.modalFullNews
+                .textContent =
+                news.fullNews;
+
+            elements.modalMarketReason
+                .textContent =
+                news.marketReason;
+
+            elements.modalSource
+                .textContent =
+                news.source;
+
+            if (news.url) {
+                elements.modalSourceLink
+                    .href =
+                    news.url;
+
+                elements.modalSourceLink
+                    .style.display =
+                    "inline-flex";
+
+            } else {
+                elements.modalSourceLink
+                    .href =
+                    "#";
+
+                elements.modalSourceLink
+                    .style.display =
+                    "none";
+            }
+        }
+
+
+        function closeNewsModal() {
+            elements.newsModal
+                .classList.remove(
+                    "modal-visible"
+                );
+
+            elements.newsModal
+                .setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+            document.body
+                .classList.remove(
+                    "modal-open"
+                );
+
+            appState.currentModalNews =
+                null;
+        }
+
+
+        /* =====================================================
+           MARK AS READ
+        ====================================================== */
+
+        function markNewsAsRead(newsId) {
+            if (!newsId) {
+                return;
+            }
+
+            appState.newNewsIds.delete(
+                newsId
+            );
+
+            const card =
+                elements.newsContainer
+                    .querySelector(
+                        `[data-news-id="${CSS.escape(
+                            newsId
+                        )}"]`
+                    );
+
+            if (card) {
+                card.classList.remove(
+                    "new-news-card"
+                );
+
+                const badge =
+                    card.querySelector(
+                        ".new-update-badge"
+                    );
+
+                if (badge) {
+                    badge.remove();
+                }
+            }
+
+            updateDashboardStatus();
+        }
+
+
+        /* =====================================================
+           SPEECH SYNTHESIS
+        ====================================================== */
+
+        const speechSupported =
+            (
+                "speechSynthesis" in window
+                &&
+                "SpeechSynthesisUtterance"
+                    in window
+            );
+
+
+        function getHindiVoice() {
+            if (!speechSupported) {
+                return null;
+            }
+
+            const voices =
+                window.speechSynthesis
+                    .getVoices();
+
+            return (
+                voices.find(
+                    (voice) =>
+                        normalizeValue(
+                            voice.lang
+                        ).startsWith(
+                            "hi"
+                        )
+                )
+                ||
+                voices.find(
+                    (voice) =>
+                        normalizeValue(
+                            voice.lang
+                        ) === "en-in"
+                )
+                ||
+                null
+            );
+        }
+
+
+        function createUtterance(text) {
+            const utterance =
+                new SpeechSynthesisUtterance(
+                    cleanSpeechText(text)
+                );
+
+            utterance.lang = "hi-IN";
+            utterance.rate = 0.94;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+
+            const voice =
+                getHindiVoice();
+
+            if (voice) {
+                utterance.voice =
+                    voice;
+            }
+
+            return utterance;
+        }
+
+
+        function updateAudioStatus(
+            title,
+            message,
+            active = false
+        ) {
+            elements.audioStatusTitle
+                .textContent =
+                title;
+
+            elements.audioStatusMessage
+                .textContent =
+                message;
+
+            elements.audioStatusPanel
+                .classList.toggle(
+                    "audio-active",
+                    active
+                );
+        }
+
+
+        function updateAudioButton() {
+            elements.autoAudioButton
+                .classList.toggle(
+                    "active",
+                    appState.autoAudioEnabled
+                );
+
+            elements.autoAudioText
+                .textContent =
+                appState.autoAudioEnabled
+                    ? "Auto Audio चालू है"
+                    : "Auto Audio चालू करें";
+        }
+
+
+        /* =====================================================
+           ALERT SOUND
+        ====================================================== */
+
+        function playAlertSound() {
+            try {
+                const AudioContextClass =
+                    window.AudioContext ||
+                    window.webkitAudioContext;
+
+                if (!AudioContextClass) {
+                    return Promise.resolve();
+                }
+
+                const context =
+                    new AudioContextClass();
+
+                const oscillator =
+                    context.createOscillator();
+
+                const gain =
+                    context.createGain();
+
+                oscillator.connect(gain);
+                gain.connect(
+                    context.destination
+                );
+
+                oscillator.type =
+                    "sine";
+
+                oscillator.frequency
+                    .setValueAtTime(
+                        880,
+                        context.currentTime
+                    );
+
+                oscillator.frequency
+                    .setValueAtTime(
+                        660,
+                        context.currentTime +
+                        0.18
+                    );
+
+                gain.gain
+                    .setValueAtTime(
+                        0.0001,
+                        context.currentTime
+                    );
+
+                gain.gain
+                    .exponentialRampToValueAtTime(
+                        0.28,
+                        context.currentTime +
+                        0.03
+                    );
+
+                gain.gain
+                    .exponentialRampToValueAtTime(
+                        0.0001,
+                        context.currentTime +
+                        0.45
+                    );
+
+                oscillator.start();
+                oscillator.stop(
+                    context.currentTime +
+                    0.5
+                );
+
+                return new Promise(
+                    (resolve) =>
+                        window.setTimeout(
+                            () => {
+                                context.close();
+                                resolve();
+                            },
+                            550
+                        )
+                );
+
+            } catch (error) {
+                return Promise.resolve();
+            }
+        }
+
+
+        function speakText(text) {
+            return new Promise(
+                (resolve) => {
+                    if (
+                        !speechSupported ||
+                        !cleanSpeechText(text)
+                    ) {
+                        resolve();
+                        return;
+                    }
+
+                    const utterance =
+                        createUtterance(
+                            text
+                        );
+
+                    utterance.onend =
+                        () => resolve();
+
+                    utterance.onerror =
+                        () => resolve();
+
+                    window.speechSynthesis
+                        .speak(
+                            utterance
+                        );
+                }
+            );
+        }
+
+
+        function buildReporterAudioText(news) {
+            return cleanSpeechText(
+                news.audioText ||
+                (
+                    `${news.headlineHi || news.headline}। `
+                    +
+                    `${news.fullNews}। `
+                    +
+                    `${news.marketReason}`
+                )
+            );
+        }
+
+
+        /* =====================================================
+           AUDIO QUEUE
+        ====================================================== */
+
+        function queueNewsForAudio(newsItems) {
+            newsItems.forEach(
+                (news) => {
+                    if (
+                        appState.spokenNewsIds
+                            .has(news.id)
+                    ) {
+                        return;
+                    }
+
+                    const alreadyQueued =
+                        appState.audioQueue.some(
+                            (queuedNews) =>
+                                queuedNews.id ===
+                                news.id
+                        );
+
+                    if (!alreadyQueued) {
+                        appState.audioQueue.push(
+                            news
+                        );
+                    }
+                }
+            );
+
+            appState.audioQueue =
+                sortNewestFirst(
+                    appState.audioQueue
+                );
+        }
+
+
+        async function processAudioQueue() {
+            if (
+                appState.audioPlaying ||
+                !appState.autoAudioEnabled ||
+                appState.audioQueue.length === 0 ||
+                !speechSupported
+            ) {
+                return;
+            }
+
+            appState.audioPlaying =
+                true;
+
+            let isFirstStory = true;
+
+            while (
+                appState.autoAudioEnabled &&
+                appState.audioQueue.length > 0
+            ) {
+                const news =
+                    appState.audioQueue.shift();
+
+                if (
+                    appState.spokenNewsIds
+                        .has(news.id)
+                ) {
+                    continue;
+                }
+
+                appState.currentAudioNews =
+                    news;
+
+                updateAudioStatus(
+                    isFirstStory
+                        ? "Breaking News"
+                        : "अगली खबर",
+                    news.headline,
+                    true
+                );
+
+                await playAlertSound();
+
+                await speakText(
+                    isFirstStory
+                        ? "ब्रेकिंग न्यूज़"
+                        : "अगली खबर"
+                );
+
+                await speakText(
+                    buildReporterAudioText(
+                        news
+                    )
+                );
+
+                appState.spokenNewsIds
+                    .add(news.id);
+
+                saveSpokenNewsIds();
+
+                markNewsAsRead(
+                    news.id
+                );
+
+                isFirstStory = false;
+            }
+
+            appState.currentAudioNews =
+                null;
+
+            appState.audioPlaying =
+                false;
+
+            updateAudioStatus(
+                appState.autoAudioEnabled
+                    ? "Auto Audio चालू है"
+                    : "Audio पूरा हुआ",
+                appState.autoAudioEnabled
+                    ? "नई market-moving खबर की प्रतीक्षा है।"
+                    : "खबर पूरी सुनाई जा चुकी है।",
+                appState.autoAudioEnabled
+            );
+        }
+
+
+        function handleIncomingNews(
+            incomingNews
+        ) {
+            if (
+                !appState.autoAudioEnabled ||
+                !speechSupported ||
+                !Array.isArray(
+                    incomingNews
+                ) ||
+                incomingNews.length === 0
+            ) {
+                return;
+            }
+
+            queueNewsForAudio(
+                incomingNews
+            );
+
+            processAudioQueue();
+        }
+
+
+        function playNewsManually(news) {
+            if (
+                !speechSupported ||
+                !news
+            ) {
+                updateAudioStatus(
+                    "Audio उपलब्ध नहीं",
+                    "इस browser में speech support उपलब्ध नहीं है।",
+                    false
+                );
+
+                return;
+            }
+
+            window.speechSynthesis
+                .cancel();
+
+            appState.audioQueue = [];
+            appState.audioPlaying =
+                false;
+
+            updateAudioStatus(
+                "खबर सुनाई जा रही है",
+                news.headline,
+                true
+            );
+
+            playAlertSound()
+                .then(
+                    () => speakText(
+                        buildReporterAudioText(
+                            news
+                        )
+                    )
+                )
+                .then(
+                    () => {
+                        appState.spokenNewsIds
+                            .add(news.id);
+
+                        saveSpokenNewsIds();
+
+                        markNewsAsRead(
+                            news.id
+                        );
+
+                        updateAudioStatus(
+                            appState.autoAudioEnabled
+                                ? "Auto Audio चालू है"
+                                : "Audio पूरा हुआ",
+                            appState.autoAudioEnabled
+                                ? "नई खबर की प्रतीक्षा है।"
+                                : "खबर पूरी सुनाई जा चुकी है।",
+                            appState.autoAudioEnabled
+                        );
+                    }
+                );
+        }
+
+
+        function stopAllAudio() {
+            if (speechSupported) {
+                window.speechSynthesis
+                    .cancel();
+            }
+
+            appState.audioQueue = [];
+            appState.audioPlaying =
+                false;
+
+            appState.currentAudioNews =
+                null;
+
+            updateAudioStatus(
+                "Audio रोक दिया गया",
+                "खबर सुनने के लिए किसी card का सुनें button दबाएँ।",
+                false
+            );
+        }
+
+
+        function toggleAutoAudio() {
+            if (!speechSupported) {
+                updateAudioStatus(
+                    "Audio उपलब्ध नहीं",
+                    "इस browser में speech synthesis support उपलब्ध नहीं है।",
+                    false
+                );
+
+                return;
+            }
+
+            appState.autoAudioEnabled =
+                !appState.autoAudioEnabled;
+
+            saveAudioPreference();
+            updateAudioButton();
+
+            if (
+                appState.autoAudioEnabled
+            ) {
+                updateAudioStatus(
+                    "Auto Audio चालू है",
+                    "अब केवल नई market-moving खबरें अपने आप सुनाई जाएँगी।",
+                    true
+                );
+
+                /*
+                 पहली बार चालू करते समय existing old news
+                 अपने आप queue नहीं होगी।
+                */
+
+            } else {
+                stopAllAudio();
+
+                updateAudioStatus(
+                    "Auto Audio बंद है",
+                    "नई खबरें अपने आप नहीं सुनाई जाएँगी।",
+                    false
+                );
+            }
+        }
+
+
+        /* =====================================================
+           POLLING
+        ====================================================== */
+
+        function startPolling() {
+            stopPolling();
+
+            appState.pollingTimer =
+                window.setInterval(
+                    () => {
+                        if (
+                            document.visibilityState
+                                === "visible" &&
+                            !appState.isLoading &&
+                            !appState.isRefreshing
+                        ) {
+                            loadNews();
+                        }
+                    },
+                    NEWS_POLL_INTERVAL
+                );
+        }
+
+
+        function stopPolling() {
+            if (
+                appState.pollingTimer
+            ) {
+                window.clearInterval(
+                    appState.pollingTimer
+                );
+
+                appState.pollingTimer =
+                    null;
+            }
+        }
+
+
+        /* =====================================================
+           EVENTS
+        ====================================================== */
+
+        elements.newsContainer
+            .addEventListener(
+                "click",
+                (event) => {
+                    const button =
+                        event.target.closest(
+                            "[data-action][data-news-id]"
+                        );
+
+                    if (!button) {
+                        return;
+                    }
+
+                    const news =
+                        findNewsById(
+                            button.dataset.newsId
+                        );
+
+                    if (!news) {
+                        return;
+                    }
+
+                    markNewsAsRead(
+                        news.id
+                    );
+
+                    if (
+                        button.dataset.action
+                        === "details"
+                    ) {
+                        openNewsModal(
+                            news
+                        );
+                    }
+
+                    if (
+                        button.dataset.action
+                        === "listen"
+                    ) {
+                        playNewsManually(
+                            news
+                        );
+                    }
+                }
+            );
+
+
+        elements.searchInput
+            .addEventListener(
+                "input",
+                applyFilters
+            );
+
+
+        elements.impactFilter
+            .addEventListener(
+                "change",
+                applyFilters
+            );
+
+
+        elements.importanceFilter
+            .addEventListener(
+                "change",
+                applyFilters
+            );
+
+
+        elements.categoryFilter
+            .addEventListener(
+                "change",
+                applyFilters
+            );
+
+
+        elements.clearFiltersButton
+            .addEventListener(
+                "click",
+                clearFilters
+            );
+
+
+        elements.refreshButton
+            .addEventListener(
+                "click",
+                refreshNewsNow
+            );
+
+
+        elements.autoAudioButton
+            .addEventListener(
+                "click",
+                toggleAutoAudio
+            );
+
+
+        elements.stopAudioButton
+            .addEventListener(
+                "click",
+                stopAllAudio
+            );
+
+
+        elements.closeModalButton
+            .addEventListener(
+                "click",
+                closeNewsModal
+            );
+
+
+        elements.newsModal
+            .addEventListener(
+                "click",
+                (event) => {
+                    if (
+                        event.target ===
+                        elements.newsModal
+                    ) {
+                        closeNewsModal();
+                    }
+                }
+            );
+
+
+        elements.modalListenButton
+            .addEventListener(
+                "click",
+                () => {
+                    if (
+                        appState.currentModalNews
+                    ) {
+                        playNewsManually(
+                            appState.currentModalNews
+                        );
+                    }
+                }
+            );
+
+
+        elements.modalSourceLink
+            .addEventListener(
+                "click",
+                (event) => {
+                    const href =
+                        elements.modalSourceLink
+                            .getAttribute(
+                                "href"
+                            );
+
+                    if (
+                        !href ||
+                        href === "#"
+                    ) {
+                        event.preventDefault();
+                    }
+                }
+            );
+
+
+        document.addEventListener(
+            "keydown",
+            (event) => {
+                if (
+                    event.key === "Escape" &&
+                    elements.newsModal
+                        .classList.contains(
+                            "modal-visible"
+                        )
+                ) {
+                    closeNewsModal();
+                }
+            }
+        );
+
+
+        document.addEventListener(
+            "visibilitychange",
+            () => {
+                if (
+                    document.visibilityState
+                    === "visible"
+                ) {
+                    loadNews();
+                    startPolling();
+
+                } else {
+                    stopPolling();
+                }
+            }
+        );
+
+
+        window.addEventListener(
+            "online",
+            () => {
+                setConnectionStatus(
+                    "connecting",
+                    "Internet जुड़ गया, खबरें update हो रही हैं..."
+                );
+
+                loadNews();
+            }
+        );
+
+
+        window.addEventListener(
+            "offline",
+            () => {
+                setConnectionStatus(
+                    "error",
+                    "Internet connection उपलब्ध नहीं है"
+                );
+            }
+        );
+
+
+        if (speechSupported) {
+            window.speechSynthesis
+                .getVoices();
+
+            window.speechSynthesis
+                .onvoiceschanged =
+                () => {
+                    window.speechSynthesis
+                        .getVoices();
+                };
+        }
+
+
+        /* =====================================================
+           INITIAL START
+        ====================================================== */
+
+        async function initializeDashboard() {
+            loadStoredPreferences();
+            updateAudioButton();
+
+            updateAudioStatus(
+                appState.autoAudioEnabled
+                    ? "Auto Audio चालू है"
+                    : "Auto Audio बंद है",
+                appState.autoAudioEnabled
+                    ? "केवल नई market-moving खबर अपने आप सुनाई जाएगी।"
+                    : "चालू करने के बाद केवल नई खबर अपने आप सुनाई जाएगी।",
+                appState.autoAudioEnabled
+            );
+
+            if (!navigator.onLine) {
+                setConnectionStatus(
+                    "error",
+                    "Internet connection उपलब्ध नहीं है"
+                );
+            }
+
+            await loadNews(true);
+
+            /*
+             Initial load की सारी existing news को known माना जाएगा।
+             इसलिए dashboard खुलते ही पुरानी खबरें नहीं पढ़ी जाएँगी।
+            */
+
+            startPolling();
+        }
+
+
+        initializeDashboard();
+
+
+        /* =====================================================
+           CLEANUP
+        ====================================================== */
+
+        window.addEventListener(
+            "beforeunload",
+            () => {
+                stopPolling();
+
+                if (speechSupported) {
+                    window.speechSynthesis
+                        .cancel();
+                }
+            }
+        );
+
+
+        window.addEventListener(
+            "unhandledrejection",
+            (event) => {
+                console.error(
+                    "Unhandled promise rejection:",
+                    event.reason
+                );
+            }
+        );
+
+    </script>
+
+</body>
+</html>
