@@ -255,7 +255,8 @@ a {
 .brand-content h1 {
     overflow: hidden;
 
-    color: var(--text-primary);
+    color: #facc15;
+    text-shadow: 0 0 12px rgba(250,204,21,0.35);
 
     font-size:
         clamp(20px, 3vw, 28px);
