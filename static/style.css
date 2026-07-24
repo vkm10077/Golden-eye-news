@@ -1938,8 +1938,12 @@ a {
 ================================ */
 
 .brand-icon img{
-    width:60px;
-    height:60px;
+    width:72px;
+    height:72px;
     border-radius:50%;
     object-fit:cover;
+    border:2px solid #facc15;
+    box-shadow:
+        0 0 10px rgba(250,204,21,0.60),
+        0 0 24px rgba(250,204,21,0.35);
 }
