@@ -13,6 +13,7 @@ from email.utils import parsedate_to_datetime
 import feedparser
 import requests
 from bs4 import BeautifulSoup
+from news_sources import get_feed_urls
 
 
 # =========================================================
