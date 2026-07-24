@@ -196,13 +196,7 @@ a {
         #132238 100%
     );
 
-    border:
-        1px solid rgba(
-            51,
-            65,
-            85,
-            0.72
-        );
+    border: 1px solid rgba(250, 204, 21, 0.35);
 
     border-radius:
         var(--radius-large);
@@ -211,7 +205,8 @@ a {
         blur(18px);
 
     box-shadow:
-        var(--shadow-medium);
+        0 0 12px rgba(250,204,21,0.18),
+        0 10px 30px rgba(0,0,0,0.35);
 }
 
 .brand-section {
