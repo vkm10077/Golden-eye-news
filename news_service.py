@@ -213,29 +213,39 @@ DEFAULT_RSS_FEEDS = [
 
 def get_configured_feeds():
     """
-    Optional Render environment variable:
+    news_sources.py से सभी default और custom RSS feeds
+    प्राप्त करता है।
 
-    NEWS_RSS_FEEDS=url1,url2,url3
-
-    Environment variable नहीं होने पर Golden AI की
-    default global market queries इस्तेमाल होंगी।
+    किसी कारण news_sources.py से feeds नहीं मिलने पर
+    news_service.py की internal default feeds इस्तेमाल होंगी।
     """
 
-    configured = os.environ.get(
-        "NEWS_RSS_FEEDS",
-        "",
-    ).strip()
+    try:
+        configured_feeds = get_feed_urls()
 
-    if not configured:
-        return DEFAULT_RSS_FEEDS
+        valid_feeds = [
+            str(feed_url).strip()
+            for feed_url in configured_feeds
+            if str(feed_url).strip()
+        ]
 
-    feeds = [
-        item.strip()
-        for item in configured.split(",")
-        if item.strip()
-    ]
+        if valid_feeds:
+            print(
+                "NEWS SOURCES LOADED | "
+                f"{len(valid_feeds)} feeds",
+                flush=True,
+            )
 
-    return feeds or DEFAULT_RSS_FEEDS
+            return valid_feeds
+
+    except Exception as error:
+        print(
+            "NEWS SOURCES LOAD WARNING | "
+            f"{type(error).__name__}: {error}",
+            flush=True,
+        )
+
+    return DEFAULT_RSS_FEEDS
 
 
 # =========================================================
